@@ -21,17 +21,15 @@ This project is not associated with or endorsed by Firefly Studios
 
    Make sure to choose the correct build for your system
 
-   Extract the files and place them together in the same folder anywhere on your PC
+   Extract the files into the same folder anywhere on your PC
 
 2. **Configure the generator**
 
    Edit the `config.txt` file in the program directory
 
    - A default config is provided
-   - The config is validated before each run with very lenient rules
-   - It is still possible to set impossible or nonsensical values
-   - You may reorder variables freely
-   - Every variable must exist and have a valid value
+   - The config is validated before each run with very lenient rules, it is still possible to set impossible or nonsensical values
+   - You may reorder variables freely, however every variable must exist and have a valid value
    - Documentation of variables is not provided, experiment with values to see how they affect the output
 
 3. **Run the game**
