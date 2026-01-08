@@ -27,22 +27,23 @@ This project is not associated with or endorsed by Firefly Studios
 
    Edit the `config.txt` file in the program directory
 
-  - A default config is provided
-  - The config is validated before each run with very lenient rules
-  - It is still possible to set impossible or nonsensical values
-  - You may reorder variables freely
-  - Every variable must exist and have a valid value
-  - Documentation of variables is not provided, experiment with values to see how they affect the output
+   - A default config is provided
+   - The config is validated before each run with very lenient rules
+   - It is still possible to set impossible or nonsensical values
+   - You may reorder variables freely
+   - Every variable must exist and have a valid value
+   - Documentation of variables is not provided, experiment with values to see how they affect the output
 
 3. **Run the game**
 
-  - If automatic map saving is enabled, leave it in the main menu, otherwise create a new map in the map editor
+   - If automatic map saving is enabled, leave it in the main menu, otherwise create a new map in the map editor
 
 4. **Run the generator**
 
-  - Administrator permissions are required
-  - Do not interact with the game while the generator is running, doing so may corrupt the output or crash the game
-  - If your antivirus quarantines the program, create an exception, restore or reinstall the executable if necessary
+   - Administrator permissions are required
+   - Do not interact with the game while the generator is running, doing so may corrupt the output or crash the game
+   
+   If your antivirus quarantines the program, create an exception, restore or reinstall the executable if necessary
 
 ## Licensing and Attribution
 
