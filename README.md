@@ -12,9 +12,9 @@ This project is not associated with or endorsed by Firefly Studios
 Windows 7 or newer
 
 Stronghold Crusader
-- v1.41 (latest Steam or GOG release, or manually patched)
-- English or other Latin-alphabet localization
-- Extreme is not supported
+- v1.41 and v1.41-E in latin-alphabet localizations are supported
+- Older HD versions and/or non-latin-alphabet localizations are not supported, but are likely to be compatible anyway
+- Non-HD versions are not supported and are very unlikely to be compatible
 
 ### Setup
 

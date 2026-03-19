@@ -1,0 +1,105 @@
+# comments work
+
+map_count = 1
+save_maps = false
+
+mirror_mode = 2_point
+feature_count_multiplier = 1
+
+generate_heights = true
+	plateau_heights = 8, 8, 8, 68, 68, 128
+	plateau_core_count_range = 8, 12
+	plateau_core_size_range = 20, 40
+	plateau_core_spacing_min = 5
+	plateau_core_allow_mirror_overlap = true
+	generate_plateau_border = false
+		plateau_border_start_radius = 190
+	generate_ramps = true
+		ramp_count_modifier_range = 1, 2
+		ramp_restrict_growth_towards_edge = false
+		ramp_base_max_distance_from_center = 196
+		ramp_size_range = 10, 40
+		ramp_step_height_base_difference = 8
+		ramp_step_height_variance_range = -1, 1
+	generate_cliffs = true
+		cliff_step_height_difference = 20
+		cliff_growth_factor_range = 0, 3
+		generate_cliff_rocks = true
+			cliff_rock_count_modifier = 16
+
+generate_border = false
+	border_start_radius = 197
+	border_size_range = 3000, 4000
+	border_height_variance_range = -4, 4
+
+generate_grasslands = true
+	grassland_core_count_range = 8, 12
+	grassland_core_size_range = 20, 40
+	grassland_core_allow_mirror_overlap = true
+	grassland_grass_dark_share = 1
+	grassland_grass_medium_share = 1
+	grassland_grass_light_share = 1
+	grassland_earth_and_stones_share = 1
+	grassland_earth_share = 4
+
+generate_keeps = true
+	generate_players = true
+		player_count_range = 2, 2
+		player_reserved_area_radius = 17
+		player_min_mirror_distance = 80
+	generate_spectators = true
+		spectator_count_range = 1, 1
+		spectator_lion_count = 10
+
+generate_quarry_spots = true
+	quarry_spot_count_range = 3, 6
+	quarry_spot_size_range = 190, 210
+	quarry_spot_stone_share = 1
+	quarry_spot_gravel_share = 2
+	quarry_spot_grass_light_share = 2
+	quarry_spot_earth_and_stones_share = 9
+
+generate_iron_mine_spots = true
+	iron_mine_spot_count_range = 8, 10
+	iron_mine_spot_cage_rock_chance = 33
+
+generate_pitch_rig_spots = true
+	pitch_rig_spot_count_range = 4, 5
+	pitch_rig_spot_cage_rock_chance = 33
+
+generate_trees = true
+	tree_blob_count_range = 20, 40
+	tree_blob_size_range = 1, 200
+
+generate_animals = true
+	generate_deer = true
+		deer_group_count_range = 3, 6
+		deer_per_group_range = 1, 9
+		deer_reserved_area_radius = 2
+	generate_lions = false
+		lion_group_count_range = 1, 2
+		lion_per_group_range = 1, 3
+		lion_reserved_area_radius = 1
+	generate_rabbits = false
+		rabbit_group_count_range = 1, 3
+		rabbit_per_group_range = 1, 3
+		rabbit_reserved_area_radius = 1
+	generate_camels = true
+		camel_group_count_range = 1, 3
+		camel_per_group_range = 1, 5
+		camel_reserved_area_radius = 2
+
+generate_shrubs = true
+	shrub_count_modifier = 1000
+
+generate_texturing = true
+	texturing_beach_blob_count_range = 500, 1000
+	texturing_beach_blob_size_range = 1, 3
+	texturing_dunes_blob_count_range = 1000, 2000
+	texturing_dunes_blob_size_range = 5, 10
+	texturing_earth_and_stones_blob_count_range = 1000, 2000
+	texturing_earth_and_stones_blob_size_range = 5, 20
+	texturing_grass_light_blob_count_range = 500, 1000
+	texturing_grass_light_blob_size_range = 1, 3
+	texturing_grass_medium_blob_count_range = 50, 150
+	texturing_grass_medium_blob_size_range = 1, 3
