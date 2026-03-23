@@ -6,6 +6,7 @@
 #include <windows.h>
 #include <tlhelp32.h>
 #include <tchar.h>
+#include <psapi.h>
 
 static HANDLE process_handle;
 
@@ -308,8 +309,8 @@ bool aob_scan(AddressData *address_data, u32 entry_count)
 {
 	bool ret = false;
 	
-	u8 *section_buffer = NULL;
-	u32 section_buffer_size = 0;
+	u8 *region_buffer = NULL;
+	u32 region_buffer_size = 0;
 	
 	struct {
 		u32 first_byte_offset;
@@ -449,38 +450,86 @@ bool aob_scan(AddressData *address_data, u32 entry_count)
 		}
 	}
 	
-	MEMORY_BASIC_INFORMATION mbi;
-	usize scan_address = 0;
+	HMODULE h_mods[1024];
+	DWORD tmp;
 	
-	while (VirtualQueryEx(process_handle, (LPCVOID)scan_address, &mbi, sizeof(mbi))) {
+	if (!EnumProcessModules(process_handle, h_mods, sizeof(h_mods), &tmp)) goto out;
+	
+	MODULEINFO module_info;
+	if (!GetModuleInformation(process_handle, h_mods[0], &module_info, sizeof(module_info))) goto out;
+	
+	BYTE *module_base = (BYTE *)module_info.lpBaseOfDll;
+	
+	IMAGE_DOS_HEADER dos_header;
+	if (!ReadProcessMemory(process_handle, module_base, &dos_header, sizeof(dos_header), NULL)) goto out;
+	if (dos_header.e_magic != IMAGE_DOS_SIGNATURE) goto out;
+	
+	IMAGE_NT_HEADERS32 nt_headers;
+	if (!ReadProcessMemory(process_handle, module_base + dos_header.e_lfanew, &nt_headers, sizeof(nt_headers), NULL)) goto out;
+	if (nt_headers.Signature != IMAGE_NT_SIGNATURE) goto out;
+	
+	u32 region_count = (u32)nt_headers.FileHeader.NumberOfSections;
+	usize region_table = (usize)(module_base + dos_header.e_lfanew + sizeof(IMAGE_NT_HEADERS32));
+	
+	usize scan_address = 0;
+	usize scan_end = 0;
+	
+	for (u32 i = 0; i < region_count; i++) {
+		
+		IMAGE_SECTION_HEADER section;
+		
+		if (!ReadProcessMemory(process_handle, (LPCVOID)(region_table + (i * sizeof(IMAGE_SECTION_HEADER))), &section, sizeof(section), NULL)) goto out;
+		
+		if (memcmp(section.Name, ".text", 5) == 0) {
+			scan_address = (usize)module_base + section.VirtualAddress;
+			scan_end = scan_address + section.Misc.VirtualSize;
+			break;
+		}
+		
+	}
+	
+	if (scan_address == 0) goto out;
+	
+	MEMORY_BASIC_INFORMATION mbi;
+	
+	while (scan_address < scan_end && VirtualQueryEx(process_handle, (LPCVOID)scan_address, &mbi, sizeof(mbi))) {
+		
+		usize region_start = (usize)mbi.BaseAddress;
+		
+		if (region_start >= scan_end) break;
+		
+		usize region_end = region_start + mbi.RegionSize;
+		if (region_end > scan_end) region_end = scan_end;
 		
 		if (mbi.State == MEM_COMMIT
 		&& (mbi.Protect & (PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY))
 		&& !(mbi.Protect & (PAGE_NOACCESS | PAGE_GUARD))) {
 			
-			usize section_start = (usize)mbi.BaseAddress;
-			usize section_size = mbi.RegionSize;
+			usize region_size = region_end - region_start;
 			
-			if (section_buffer_size < section_size) {
-				free(section_buffer);
-				if (!(section_buffer = malloc(section_size))) goto out;
-				section_buffer_size = section_size;
+			if (region_buffer_size < region_size) {
+				free(region_buffer);
+				if (!(region_buffer = malloc(region_size))) goto out;
+				region_buffer_size = region_size;
 			}
 			
 			SIZE_T read_byte_count;
-			if (!ReadProcessMemory(process_handle, mbi.BaseAddress, section_buffer, section_size, &read_byte_count)) goto out;
-			if (read_byte_count == 0) continue;
+			if (!ReadProcessMemory(process_handle, (LPCVOID)region_start, region_buffer, region_size, &read_byte_count)) goto out;
+			if (read_byte_count == 0) {
+				scan_address = region_end;
+				continue;
+			}
 			
-			for (u32 section_byte_index = 0; section_byte_index < read_byte_count; section_byte_index++) {
+			for (u32 region_byte_index = 0; region_byte_index < read_byte_count; region_byte_index++) {
 				
-				u8 *section_byte_ptr = section_buffer + section_byte_index;
-				u8 section_byte_value = *section_byte_ptr;
+				u8 *region_byte_ptr = region_buffer + region_byte_index;
+				u8 region_byte_value = *region_byte_ptr;
 				
-				u32 bucket_entry_count = entry_buckets[section_byte_value].entry_count;
+				u32 bucket_entry_count = entry_buckets[region_byte_value].entry_count;
 				
 				if (bucket_entry_count == 0) continue;
 				
-				u32 bucket_entry_data_index_offset = entry_buckets[section_byte_value].entry_data_index_offset;
+				u32 bucket_entry_data_index_offset = entry_buckets[region_byte_value].entry_data_index_offset;
 				
 				for (u32 bucket_entry_index = 0; bucket_entry_index < bucket_entry_count; bucket_entry_index++) {
 					
@@ -489,8 +538,8 @@ bool aob_scan(AddressData *address_data, u32 entry_count)
 					u32 first_byte_offset = entry_data[entry_index].first_byte_offset;
 					u32 last_byte_offset = entry_data[entry_index].last_byte_offset;
 					
-					if (section_byte_index < first_byte_offset 
-					|| section_byte_index + last_byte_offset >= read_byte_count) continue;
+					if (region_byte_index < first_byte_offset 
+					|| region_byte_index + last_byte_offset >= read_byte_count) continue;
 					
 					u32 entry_check_byte_count = entry_data[entry_index].check_byte_count;
 					u32 entry_check_byte_offset = entry_data[entry_index].check_byte_offset;
@@ -504,7 +553,7 @@ bool aob_scan(AddressData *address_data, u32 entry_count)
 						i32 offset = check_bytes[check_byte_offset].offset;
 						u8 check_byte_value = check_bytes[check_byte_offset].value;
 						
-						u8 offset_byte_value = section_byte_ptr[offset];
+						u8 offset_byte_value = region_byte_ptr[offset];
 						
 						if (check_byte_value == offset_byte_value) continue;
 						
@@ -518,9 +567,9 @@ bool aob_scan(AddressData *address_data, u32 entry_count)
 					if (entry_data[entry_index].found) goto out;
 					
 					if (address_data[entry_index].is_read_type) {
-						memcpy(&address_data[entry_index].address, section_buffer + section_byte_index - first_byte_offset, sizeof(uint32_t));
+						memcpy(&address_data[entry_index].address, region_buffer + region_byte_index - first_byte_offset, sizeof(u32));
 					} else {
-						address_data[entry_index].address = section_start + section_byte_index - first_byte_offset;
+						address_data[entry_index].address = region_start + region_byte_index - first_byte_offset;
 					}
 					
 					entry_data[entry_index].found = true;
@@ -531,7 +580,7 @@ bool aob_scan(AddressData *address_data, u32 entry_count)
 			
 		}
 		
-		scan_address = (usize)mbi.BaseAddress + mbi.RegionSize;
+		scan_address = region_end;
 		
 	}
 	
@@ -542,7 +591,7 @@ bool aob_scan(AddressData *address_data, u32 entry_count)
 	ret = true;
 	
 out:
-	free(section_buffer);
+	free(region_buffer);
 	return ret;
 }
 

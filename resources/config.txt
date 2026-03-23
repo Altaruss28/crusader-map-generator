@@ -1,7 +1,5 @@
-# comments work
-
 map_count = 1
-save_maps = false
+save_maps = false # note: auto-saved maps must be manually re-saved to appear in skirmish lobby
 
 mirror_mode = 2_point
 feature_count_multiplier = 1

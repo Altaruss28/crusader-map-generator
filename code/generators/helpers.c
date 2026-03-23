@@ -95,13 +95,17 @@ err:
 CoordsArray *get_ai_resource_spot_origins(void)
 {
 	CoordsArray *origins = init_coords_array();
-	if (!origins) return NULL;
+	if (!origins) goto err;
 	
 	for (u32 x = 4; x < MAP_SIZE - 5; x += 5) {
 		for (u32 y = 4; y < MAP_SIZE - 5; y += 5) {
-			add_coords(origins, x, y);
+			if (!add_coords(origins, x, y)) goto err;
 		}
 	}
 	
 	return origins;
+	
+err:
+	free_coords_array(origins);
+	return NULL;
 }

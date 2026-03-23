@@ -17,11 +17,14 @@ int main(void)
 	
 	init_translation_matrix();
 	
-	printf("%s\n", version_string);
-	printf("\n");
-	printf("Enter \"r\" to run the generator\n");
-	printf("Enter \"q\" to quit the program\n");
-	printf("\n");
+	printf(
+		"%s\n"
+		"\n"
+		"Enter \"r\" to run the generator\n"
+		"Enter \"q\" to quit the program\n"
+		"\n",
+		version_string
+	);
 	
 	while (true) {
 		
@@ -59,7 +62,9 @@ int main(void)
 		CRITICAL_SECTION run_counter_access;
 		CRITICAL_SECTION injection_access;
 		CRITICAL_SECTION stdout_access;
-		bool critical_sections_initialized = false;
+		BOOL cs_rca_ret = FALSE;
+		BOOL cs_ia_ret = FALSE;
+		BOOL cs_sa_ret = FALSE;
 		
 		if (!(config = init_config())) {
 			printf("Error: init_config failed\n");
@@ -86,16 +91,15 @@ int main(void)
 			goto cleanup;
 		}
 		
-		init_mirror(config);
-		
-		BOOL cs_rca_ret = InitializeCriticalSectionEx(&run_counter_access, 0, CRITICAL_SECTION_NO_DEBUG_INFO);
-		BOOL cs_ia_ret = InitializeCriticalSectionEx(&injection_access, 0, CRITICAL_SECTION_NO_DEBUG_INFO);
-		BOOL cs_sa_ret = InitializeCriticalSectionEx(&stdout_access, 0, CRITICAL_SECTION_NO_DEBUG_INFO);
-		critical_sections_initialized = true;
+		cs_rca_ret = InitializeCriticalSectionEx(&run_counter_access, 0, CRITICAL_SECTION_NO_DEBUG_INFO);
+		cs_ia_ret = InitializeCriticalSectionEx(&injection_access, 0, CRITICAL_SECTION_NO_DEBUG_INFO);
+		cs_sa_ret = InitializeCriticalSectionEx(&stdout_access, 0, CRITICAL_SECTION_NO_DEBUG_INFO);
 		if (!cs_rca_ret || !cs_ia_ret || !cs_sa_ret) {
 			printf("Error: InitializeCriticalSectionEx failed\n");
 			goto cleanup;
 		}
+		
+		init_mirror(config);
 		
 		u32 run_counter = 0;
 		
@@ -162,11 +166,9 @@ cleanup:
 		
 		free(thread_handles);
 		
-		if (critical_sections_initialized) {
-			DeleteCriticalSection(&stdout_access);
-			DeleteCriticalSection(&injection_access);
-			DeleteCriticalSection(&run_counter_access);
-		}
+		if (cs_sa_ret) DeleteCriticalSection(&stdout_access);
+		if (cs_ia_ret) DeleteCriticalSection(&injection_access);
+		if (cs_rca_ret) DeleteCriticalSection(&run_counter_access);
 		
 		if (!disable_code_edits()) {
 			printf("Error: disable_code_edits failed - restart the game before further use\n");
