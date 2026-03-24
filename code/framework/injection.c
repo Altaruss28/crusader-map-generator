@@ -190,7 +190,7 @@ bool disable_code_edits(void)
 		u8 *bytes = code_edit_original_byte_buffer + byte_restore_offset;
 		
 		for (u32 byte_index = 0; byte_index < byte_count; byte_index++) {
-			if (!write_u8(address + byte_index, bytes[byte_index])) goto err;
+			if (!write_u8(address + byte_index, bytes[byte_index])) goto out;
 		}
 		
 		byte_restore_offset += byte_count;
@@ -199,7 +199,7 @@ bool disable_code_edits(void)
 	
 	ret = true;
 	
-err:
+out:
 	free(code_edit_original_byte_buffer);
 	code_edit_original_byte_buffer = NULL;
 	return ret;

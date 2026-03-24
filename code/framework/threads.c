@@ -10,16 +10,18 @@
 
 bool get_cpu_core_count(u32 *cpu_core_count)
 {
+	bool ret = false;
+	
 	SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *buf = NULL;
 	DWORD len = 0;
 	
 	if (!GetLogicalProcessorInformationEx(RelationProcessorCore, NULL, &len)) {
-		if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) goto err;
+		if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) goto out;
 	}
 	
-	if (!(buf = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)malloc(len))) goto err;
+	if (!(buf = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)malloc(len))) goto out;
 	
-	if (!GetLogicalProcessorInformationEx(RelationProcessorCore, buf, &len)) goto err;
+	if (!GetLogicalProcessorInformationEx(RelationProcessorCore, buf, &len)) goto out;
 	
 	u32 count = 0;
 	
@@ -34,11 +36,11 @@ bool get_cpu_core_count(u32 *cpu_core_count)
 	
 	*cpu_core_count = count;
 	
-	return true;
+	ret = true;
 	
-err:
+out:
 	free(buf);
-	return false;
+	return ret;
 }
 
 DWORD WINAPI generator_thread(LPVOID param)

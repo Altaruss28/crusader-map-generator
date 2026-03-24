@@ -624,17 +624,17 @@ bool write_data(u32 address, void *data, u32 size)
 	return true;
 }
 
-bool read_i8(u32 address, i8 *data) {return read_data(address, data, sizeof(data));}
-bool read_i16(u32 address, i16 *data) {return read_data(address, data, sizeof(data));}
-bool read_i32(u32 address, i32 *data) {return read_data(address, data, sizeof(data));}
+bool read_i8(u32 address, i8 *data) {return read_data(address, data, sizeof(*data));}
+bool read_i16(u32 address, i16 *data) {return read_data(address, data, sizeof(*data));}
+bool read_i32(u32 address, i32 *data) {return read_data(address, data, sizeof(*data));}
 
 bool write_i8(u32 address, i8 data) {return write_data(address, &data, sizeof(data));}
 bool write_i16(u32 address, i16 data) {return write_data(address, &data, sizeof(data));}
 bool write_i32(u32 address, i32 data) {return write_data(address, &data, sizeof(data));}
 
-bool read_u8(u32 address, u8 *data) {return read_data(address, data, sizeof(data));}
-bool read_u16(u32 address, u16 *data) {return read_data(address, data, sizeof(data));}
-bool read_u32(u32 address, u32 *data) {return read_data(address, data, sizeof(data));}
+bool read_u8(u32 address, u8 *data) {return read_data(address, data, sizeof(*data));}
+bool read_u16(u32 address, u16 *data) {return read_data(address, data, sizeof(*data));}
+bool read_u32(u32 address, u32 *data) {return read_data(address, data, sizeof(*data));}
 
 bool write_u8(u32 address, u8 data) {return write_data(address, &data, sizeof(data));}
 bool write_u16(u32 address, u16 data) {return write_data(address, &data, sizeof(data));}
