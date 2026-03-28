@@ -88,9 +88,9 @@ DWORD WINAPI generator_thread(LPVOID param)
 		u32 rng_state = GetTickCount() ^ start_time_win ^ start_time_unix ^ GetCurrentThreadId() ^ (u32)(usize)&rng_state;
 		
 		if (config->generate_heights) if (!generate_heights(map, config, &rng_state, logs)) goto err;
-		if (config->generate_border) if (!generate_border(map, config, &rng_state, logs)) goto err;
-		if (config->generate_grasslands) if (!generate_grasslands(map, config, &rng_state, logs)) goto err;
+		if (config->generate_surfaces) if (!generate_surfaces(map, config, &rng_state, logs)) goto err;
 		if (config->generate_keeps) if (!generate_keeps(map, config, &rng_state, logs)) goto err;
+		if (config->generate_ruins) if (!generate_ruins(map, config, &rng_state, logs)) goto err;
 		if (config->generate_quarry_spots) if (!generate_quarry_spots(map, config, &rng_state, logs)) goto err;
 		if (config->generate_iron_mine_spots) if (!generate_iron_mine_spots(map, config, &rng_state, logs)) goto err;
 		if (config->generate_pitch_rig_spots) if (!generate_pitch_rig_spots(map, config, &rng_state, logs)) goto err;

@@ -15,11 +15,8 @@ typedef struct Config {
 	Range plateau_core_size_range;
 	i32 plateau_core_spacing_min;
 	bool plateau_core_allow_mirror_overlap;
-	bool generate_plateau_border;
-	i32 plateau_border_start_radius;
 	bool generate_ramps;
 	Range ramp_count_modifier_range;
-	bool ramp_restrict_growth_towards_edge;
 	i32 ramp_base_max_distance_from_center;
 	Range ramp_size_range;
 	i32 ramp_step_height_base_difference;
@@ -30,20 +27,18 @@ typedef struct Config {
 	bool generate_cliff_rocks;
 	i32 cliff_rock_count_modifier;
 	
-	bool generate_border;
-	i32 border_start_radius;
-	Range border_size_range;
-	Range border_height_variance_range;
-	
-	bool generate_grasslands;
-	Range grassland_core_count_range;
-	Range grassland_core_size_range;
-	bool grassland_core_allow_mirror_overlap;
-	i32 grassland_grass_dark_share;
-	i32 grassland_grass_medium_share;
-	i32 grassland_grass_light_share;
-	i32 grassland_earth_and_stones_share;
-	i32 grassland_earth_share;
+	bool generate_surfaces;
+	Range surface_core_count_range;
+	Range surface_core_size_range;
+	bool surface_core_allow_mirror_overlap;
+	i32 surface_river_height_offset;
+	i32 surface_river_ford_transform_chance;
+	i32 surface_river_share;
+	i32 surface_grass_dark_share;
+	i32 surface_grass_medium_share;
+	i32 surface_grass_light_share;
+	i32 surface_earth_and_stones_share;
+	i32 surface_earth_share;
 	
 	bool generate_keeps;
 	bool generate_players;
@@ -53,6 +48,11 @@ typedef struct Config {
 	bool generate_spectators;
 	Range spectator_count_range;
 	i32 spectator_lion_count;
+	
+	bool generate_ruins;
+	Range ruin_blob_count_range;
+	Range ruin_blob_size_range;
+	i32 ruin_count_per_blob_modifier;
 	
 	bool generate_quarry_spots;
 	Range quarry_spot_count_range;

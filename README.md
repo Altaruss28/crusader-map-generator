@@ -3,7 +3,7 @@
 
 Procedural map generator for Stronghold Crusader 1
 
-This project is not associated with or endorsed by Firefly Studios
+![Screenshot](screenshot.png)
 
 ## Installation and Usage
 
@@ -53,6 +53,8 @@ Stronghold Crusader
 See [LICENSE](https://github.com/Altaruss28/crusader-map-generator/blob/main/LICENSE)
 
 Anything fully or partially created using this program must be clearly and prominently attributed in any distribution or publication
+
+This project is not associated with or endorsed by Firefly Studios
 
 ## Contact
 

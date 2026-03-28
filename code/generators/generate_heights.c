@@ -28,45 +28,11 @@ bool generate_heights(Map *map, Config *config, u32 *rng_state, DynamicString *l
 	u32 claimed_matrix[FLAG_MATRIX_WORD_COUNT];
 	clear_all_flags(claimed_matrix);
 	
-	u32 border_matrix[FLAG_MATRIX_WORD_COUNT];
-	clear_all_flags(border_matrix);
-	
-	if (config->generate_plateau_border) {
-		
-		u32 plateau_border_start_radius = config->plateau_border_start_radius;
-		
-		for (u32 x = 0; x < MAP_SIZE; x++) {
-			for (u32 y = 0; y < MAP_SIZE; y++) {
-				
-				if (tm[x][y].section != SECTION_VALID) continue;
-				
-				u32 distance_from_center = tm[x][y].distance_from_center;
-				
-				if (distance_from_center >= plateau_border_start_radius) {
-					
-					set_flag(claimed_matrix, x, y, true);
-					set_flag(border_matrix, x, y, true);
-					
-					if (distance_from_center == plateau_border_start_radius) {
-						if (!add_coords(plateau_expandable_tiles, x, y)) goto out;
-					}
-					
-				} else {
-					if (!add_coords(plateau_available_tiles, x, y)) goto out;
-				}
-				
-			}
+	for (u32 x = 0; x < MAP_SIZE; x++) {
+		for (u32 y = 0; y < MAP_SIZE; y++) {
+			if (tm[x][y].section != SECTION_VALID) continue;
+			if (!add_coords(plateau_available_tiles, x, y)) goto out;
 		}
-		
-	} else {
-		
-		for (u32 x = 0; x < MAP_SIZE; x++) {
-			for (u32 y = 0; y < MAP_SIZE; y++) {
-				if (tm[x][y].section != SECTION_VALID) continue;
-				if (!add_coords(plateau_available_tiles, x, y)) goto out;
-			}
-		}
-		
 	}
 	
 	u32 feature_count_multiplier = config->feature_count_multiplier;
@@ -127,8 +93,8 @@ bool generate_heights(Map *map, Config *config, u32 *rng_state, DynamicString *l
 		for (u32 x = x_origin; x < x_origin + core_width; x++) {
 			for (u32 y = y_origin; y < y_origin + core_length; y++) {
 				
-				set_flag(claimed_matrix, x, y, true);
 				set_height(map, x, y, core_height);
+				set_flag(claimed_matrix, x, y, true);
 				
 				if (x != x_origin && x != x_origin + core_width - 1 && y != y_origin && y != y_origin + core_length - 1) continue;
 				
@@ -157,8 +123,6 @@ bool generate_heights(Map *map, Config *config, u32 *rng_state, DynamicString *l
 		
 		u32 origin_height = tm[x_origin][y_origin].height;
 		
-		bool is_border = test_flag(border_matrix, x_origin, y_origin);
-		
 		for (u32 offset_index = 0; offset_index < 4; offset_index++) {
 			
 			u32 x = x_origin + four_direction_offsets[offset_index].x;
@@ -167,9 +131,8 @@ bool generate_heights(Map *map, Config *config, u32 *rng_state, DynamicString *l
 			if (tm[x][y].section != SECTION_VALID
 			|| test_flag(claimed_matrix, x, y)) continue;
 			
-			set_flag(claimed_matrix, x, y, true);
-			if (is_border) set_flag(border_matrix, x, y, true);
 			set_height(map, x, y, origin_height);
+			set_flag(claimed_matrix, x, y, true);
 			if (!add_coords(plateau_expandable_tiles, x, y)) goto out;
 			
 		}
@@ -202,7 +165,6 @@ bool generate_heights(Map *map, Config *config, u32 *rng_state, DynamicString *l
 	if (config->generate_ramps) {
 		
 		Range ramp_count_modifier_range = config->ramp_count_modifier_range;
-		bool ramp_restrict_growth_towards_edge = config->ramp_restrict_growth_towards_edge;
 		u32 ramp_base_max_distance_from_center = config->ramp_base_max_distance_from_center;
 		Range ramp_size_range = config->ramp_size_range;
 		u32 ramp_step_height_base_difference = config->ramp_step_height_base_difference;
@@ -213,31 +175,6 @@ bool generate_heights(Map *map, Config *config, u32 *rng_state, DynamicString *l
 		
 		if (!(ramp_current_tiles = init_coords_array())) goto out;
 		if (!(ramp_next_tiles = init_coords_array())) goto out;
-		
-		if (ramp_restrict_growth_towards_edge) {
-			
-			for (u32 x_origin = 0; x_origin < MAP_SIZE; x_origin++) {
-				for (u32 y_origin = 0; y_origin < MAP_SIZE; y_origin++) {
-					
-					if (tm[x_origin][y_origin].section != SECTION_VALID
-					|| tm[x_origin][y_origin].feature != FEATURE_CLIFF) continue;
-					
-					for (u32 offset_index = 0; offset_index < 8; offset_index++) {
-						
-						u32 x = x_origin + eight_direction_offsets[offset_index].x;
-						u32 y = y_origin + eight_direction_offsets[offset_index].y;
-						
-						if (!test_flag(border_matrix, x, y) || tm[x][y].feature == FEATURE_CLIFF) continue;
-						
-						set_flag(border_matrix, x_origin, y_origin, true);
-						break;
-						
-					}
-					
-				}
-			}
-			
-		}
 		
 		for (u32 core_origin_index = 0; core_origin_index < plateau_core_origins->usage; core_origin_index++) {
 			
@@ -258,8 +195,7 @@ bool generate_heights(Map *map, Config *config, u32 *rng_state, DynamicString *l
 					
 					if (tm[x][y].section != SECTION_VALID
 					|| tm[x][y].distance_from_center > ramp_base_max_distance_from_center
-					|| tm[x][y].feature == FEATURE_RAMP
-					|| test_flag(border_matrix, x, y)) break;
+					|| tm[x][y].feature == FEATURE_RAMP) break;
 					
 					if (tm[x][y].feature != FEATURE_CLIFF) continue;
 					
@@ -303,8 +239,7 @@ bool generate_heights(Map *map, Config *config, u32 *rng_state, DynamicString *l
 						
 						if (tm[x][y].distance_from_center > ramp_base_max_distance_from_center
 						|| tm[x][y].feature != FEATURE_CLIFF
-						|| tm[x][y].height != target_height
-						|| test_flag(border_matrix, x, y)) continue;
+						|| tm[x][y].height != target_height) continue;
 						
 						set_feature(map, x, y, FEATURE_RAMP);
 						set_surface(map, x, y, SURFACE_EARTH);

@@ -48,17 +48,17 @@ bool generate_trees(Map *map, Config *config, u32 *rng_state, DynamicString *log
 	
 	if (available_origins->usage > 0) {
 		
-		shuffle_coords_array(available_origins, rng_state);
-		
 		if (!(blob_tile_offsets = init_coords_array())) goto out;
 		if (!(blob_tile_coords = init_coords_array())) goto out;
+		
+		shuffle_coords_array(available_origins, rng_state);
 		
 		for (u32 blob_index = 0; blob_index < blob_count; blob_index++) {
 			
 			blob_tile_offsets->usage = 0;
 			if (!insert_blob(blob_tile_offsets, random(rng_state, blob_size_range.min, blob_size_range.max), rng_state)) goto out;
 			
-			for (size_t origin_index = 0; origin_index < available_origins->usage; origin_index++) {
+			for (u32 origin_index = 0; origin_index < available_origins->usage; origin_index++) {
 				
 				u32 x_blob_origin = available_origins->data[origin_index].x;
 				u32 y_blob_origin = available_origins->data[origin_index].y;
