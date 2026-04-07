@@ -8,16 +8,13 @@ bool generate_surfaces(Map *map, Config *config, u32 *rng_state, DynamicString *
 {
 	bool ret = false;
 	
-	CoordsArray *available_core_origins = NULL;
+	CoordsArray *available_origins = NULL;
 	CoordsArray *claimed_tiles = NULL;
 	CoordsArray *expandable_tiles = NULL;
-	CoordsArray *marsh_available_origins = NULL;
-	CoordsArray *marsh_tile_offsets = NULL;
-	CoordsArray *marsh_tile_coords = NULL;
 	
 	Tile **tm = map->tile_matrix;
 	
-	if (!(available_core_origins = init_coords_array())) goto out;
+	if (!(available_origins = init_coords_array())) goto out;
 	if (!(claimed_tiles = init_coords_array())) goto out;
 	if (!(expandable_tiles = init_coords_array())) goto out;
 	
@@ -47,16 +44,16 @@ bool generate_surfaces(Map *map, Config *config, u32 *rng_state, DynamicString *
 	for (u32 x = 0; x < MAP_SIZE; x++) {
 		for (u32 y = 0; y < MAP_SIZE; y++) {
 			if (tm[x][y].section != SECTION_VALID) continue;
-			if (!add_coords(available_core_origins, x, y)) goto out;
+			if (!add_coords(available_origins, x, y)) goto out;
 		}
 	}
 	
-	while (cores_placed < core_count && available_core_origins->usage > 0) {
+	while (cores_placed < core_count && available_origins->usage > 0) {
 		
-		u32 chosen_tile_index = random(rng_state, 0, available_core_origins->usage - 1);
-		u32 x_origin = available_core_origins->data[chosen_tile_index].x;
-		u32 y_origin = available_core_origins->data[chosen_tile_index].y;
-		remove_coords(available_core_origins, chosen_tile_index);
+		u32 chosen_tile_index = random(rng_state, 0, available_origins->usage - 1);
+		u32 x_origin = available_origins->data[chosen_tile_index].x;
+		u32 y_origin = available_origins->data[chosen_tile_index].y;
+		remove_coords(available_origins, chosen_tile_index);
 		
 		u32 core_width = random(rng_state, core_size_range.min, core_size_range.max);
 		u32 core_length = random(rng_state, core_size_range.min, core_size_range.max);
@@ -242,11 +239,8 @@ bool generate_surfaces(Map *map, Config *config, u32 *rng_state, DynamicString *
 	ret = true;
 	
 out:
-	free_coords_array(marsh_tile_coords);
-	free_coords_array(marsh_tile_offsets);
-	free_coords_array(marsh_available_origins);
 	free_coords_array(expandable_tiles);
 	free_coords_array(claimed_tiles);
-	free_coords_array(available_core_origins);
+	free_coords_array(available_origins);
 	return ret;
 }
