@@ -9,7 +9,7 @@
 #include <time.h>
 #include <windows.h>
 
-static char version_string[] = "v2026.04.07";
+static char version_string[] = "v0";
 
 int main(void)
 {
