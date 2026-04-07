@@ -27,7 +27,7 @@ generate_surfaces = true
 	surface_core_size_range = 20, 40
 	surface_core_allow_mirror_overlap = true
 	surface_river_height_offset = -8
-	surface_river_ford_transform_chance = 1
+	surface_river_ford_transform_chance = 2
 	surface_river_share = 1
 	surface_grass_dark_share = 5
 	surface_grass_medium_share = 5
@@ -46,7 +46,8 @@ generate_keeps = true
 
 generate_ruins = true
 	ruin_blob_count_range = 1, 2
-	ruin_blob_size_range = 100, 200
+	ruin_blob_step_count_range = 100, 200
+	ruin_blob_grow_count_range = 100, 200
 	ruin_count_per_blob_modifier = 20
 
 generate_quarry_spots = true
@@ -59,15 +60,16 @@ generate_quarry_spots = true
 
 generate_iron_mine_spots = true
 	iron_mine_spot_count_range = 8, 10
-	iron_mine_spot_cage_rock_chance = 33
+	iron_mine_spot_cage_rock_chance = 50
 
 generate_pitch_rig_spots = true
 	pitch_rig_spot_count_range = 4, 5
-	pitch_rig_spot_cage_rock_chance = 33
+	pitch_rig_spot_cage_rock_chance = 50
 
 generate_trees = true
-	tree_blob_count_range = 20, 40
-	tree_blob_size_range = 1, 200
+	tree_blob_count_range = 10, 30
+	tree_blob_step_count_range = 1, 300
+	tree_blob_grow_count_range = 1, 100
 
 generate_animals = true
 	generate_deer = true

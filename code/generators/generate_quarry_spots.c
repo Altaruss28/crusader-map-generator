@@ -53,7 +53,7 @@ bool generate_quarry_spots(Map *map, Config *config, u32 *rng_state, DynamicStri
 			
 			spot_tile_offsets->usage = 0;
 			u32 spot_size = random(rng_state, spot_size_range.min, spot_size_range.max);
-			if (!insert_blob(spot_tile_offsets, spot_size, rng_state)) goto out;
+			if (!insert_blob(spot_tile_offsets, 0, spot_size, rng_state)) goto out;
 			
 			for (u32 origin_index = 0; origin_index < available_origins->usage; origin_index++) {
 				

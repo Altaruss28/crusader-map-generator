@@ -11,6 +11,9 @@ bool generate_surfaces(Map *map, Config *config, u32 *rng_state, DynamicString *
 	CoordsArray *available_core_origins = NULL;
 	CoordsArray *claimed_tiles = NULL;
 	CoordsArray *expandable_tiles = NULL;
+	CoordsArray *marsh_available_origins = NULL;
+	CoordsArray *marsh_tile_offsets = NULL;
+	CoordsArray *marsh_tile_coords = NULL;
 	
 	Tile **tm = map->tile_matrix;
 	
@@ -239,6 +242,9 @@ bool generate_surfaces(Map *map, Config *config, u32 *rng_state, DynamicString *
 	ret = true;
 	
 out:
+	free_coords_array(marsh_tile_coords);
+	free_coords_array(marsh_tile_offsets);
+	free_coords_array(marsh_available_origins);
 	free_coords_array(expandable_tiles);
 	free_coords_array(claimed_tiles);
 	free_coords_array(available_core_origins);

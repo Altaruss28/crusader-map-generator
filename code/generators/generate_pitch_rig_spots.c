@@ -4,56 +4,6 @@
 #include "config.h"
 #include "helpers.h"
 
-typedef struct VarTileSpec {
-	Range x_offset_range;
-	Range y_offset_range;
-	Range height_range;
-	Surface surface;
-} VarTileSpec;
-
-static const VarTileSpec pitch_rig_spot_composition[] = {
-	{{3, 3}, {2, 2}, {4, 4}, SURFACE_OIL},
-	{{3, 3}, {3, 3}, {4, 4}, SURFACE_OIL},
-	{{2, 2}, {3, 3}, {4, 4}, SURFACE_OIL},
-	{{2, 2}, {2, 2}, {4, 4}, SURFACE_OIL},
-	
-	{{3, 3}, {1, 1}, {5, 6}, SURFACE_MARSH},
-	{{4, 4}, {1, 1}, {5, 6}, SURFACE_MARSH},
-	{{4, 4}, {2, 2}, {5, 6}, SURFACE_MARSH},
-	{{4, 4}, {3, 3}, {5, 6}, SURFACE_MARSH},
-	{{4, 4}, {4, 4}, {5, 6}, SURFACE_MARSH},
-	{{3, 3}, {4, 4}, {5, 6}, SURFACE_MARSH},
-	{{2, 2}, {4, 4}, {5, 6}, SURFACE_MARSH},
-	{{1, 1}, {4, 4}, {5, 6}, SURFACE_MARSH},
-	{{1, 1}, {3, 3}, {5, 6}, SURFACE_MARSH},
-	{{1, 1}, {2, 2}, {5, 6}, SURFACE_MARSH},
-	{{1, 1}, {1, 1}, {5, 6}, SURFACE_MARSH},
-	{{2, 2}, {1, 1}, {5, 6}, SURFACE_MARSH},
-	
-	{{2, 3}, {1, 1}, {4, 4}, SURFACE_OIL},
-	{{4, 4}, {2, 3}, {4, 4}, SURFACE_OIL},
-	{{2, 3}, {4, 4}, {4, 4}, SURFACE_OIL},
-	{{1, 1}, {2, 3}, {4, 4}, SURFACE_OIL},
-	
-	{{3, 4}, {0, 0}, {7, 7}, SURFACE_MARSH},
-	{{5, 5}, {1, 2}, {7, 7}, SURFACE_MARSH},
-	{{5, 5}, {3, 4}, {7, 7}, SURFACE_MARSH},
-	{{3, 4}, {5, 5}, {7, 7}, SURFACE_MARSH},
-	{{1, 2}, {5, 5}, {7, 7}, SURFACE_MARSH},
-	{{0, 0}, {3, 4}, {7, 7}, SURFACE_MARSH},
-	{{0, 0}, {1, 2}, {7, 7}, SURFACE_MARSH},
-	{{1, 2}, {0, 0}, {7, 7}, SURFACE_MARSH},
-	
-	{{3, 4}, {0, 0}, {8, 8}, SURFACE_ROCKS},
-	{{5, 5}, {1, 2}, {8, 8}, SURFACE_ROCKS},
-	{{5, 5}, {3, 4}, {8, 8}, SURFACE_ROCKS},
-	{{3, 4}, {5, 5}, {8, 8}, SURFACE_ROCKS},
-	{{1, 2}, {5, 5}, {8, 8}, SURFACE_ROCKS},
-	{{0, 0}, {3, 4}, {8, 8}, SURFACE_ROCKS},
-	{{0, 0}, {1, 2}, {8, 8}, SURFACE_ROCKS},
-	{{1, 2}, {0, 0}, {8, 8}, SURFACE_ROCKS},
-};
-
 bool generate_pitch_rig_spots(Map *map, Config *config, u32 *rng_state, DynamicString *logs)
 {
 	bool ret = false;
@@ -96,27 +46,75 @@ bool generate_pitch_rig_spots(Map *map, Config *config, u32 *rng_state, DynamicS
 		
 		if (has_mirror_overlap_rectangle(x_origin + 1, y_origin + 1, 4, 4)) continue;
 		
-		for (u32 tile_index = 0; tile_index < sizeof(pitch_rig_spot_composition) / sizeof(pitch_rig_spot_composition[0]); tile_index++) {
-			
-			VarTileSpec tile_spec = pitch_rig_spot_composition[tile_index];
-			
-			u32 x = x_origin + random(rng_state, tile_spec.x_offset_range.min, tile_spec.x_offset_range.max);
-			u32 y = y_origin + random(rng_state, tile_spec.y_offset_range.min, tile_spec.y_offset_range.max);
-			
-			set_height(map, x, y, random(rng_state, tile_spec.height_range.min, tile_spec.height_range.max));
-			set_surface(map, x, y, tile_spec.surface);
-			
-			if (tile_spec.surface != SURFACE_ROCKS
-			|| cage_rock_chance < (u32)random(rng_state, 1, 100)
-			|| has_mirror_overlap_rectangle(x, y, 1, 1)) continue;
-			
-			if (!place_rock(map, x, y, 1)) goto out;
-			
-		}
-		
 		for (u32 x = x_origin; x < x_origin + 6; x++) {
 			for (u32 y = y_origin; y < y_origin + 6; y++) {
 				set_feature(map, x, y, FEATURE_PITCH_RIG_SPOT);
+			}
+		}
+		
+		u8 inside_heights[4][4] = {
+			{6, 5, 5, 6},
+			{5, 4, 4, 5},
+			{5, 4, 4, 5},
+			{6, 5, 5, 6},
+		};
+		
+		for (u32 x_height = 0; x_height < 4; x_height++) {
+			for (u32 y_height = 0; y_height < 4; y_height++) {
+				u32 x = x_origin + 1 + x_height;
+				u32 y = y_origin + 1 + y_height;
+				
+				set_height(map, x, y, inside_heights[x_height][y_height]);
+				set_surface(map, x, y, SURFACE_MARSH);
+			}
+		}
+		
+		Coords ring_offsets[8] = {
+			{random(rng_state, 3, 4), 0},
+			{5, random(rng_state, 1, 2)},
+			{5, random(rng_state, 3, 4)},
+			{random(rng_state, 3, 4), 5},
+			{random(rng_state, 1, 2), 5},
+			{0, random(rng_state, 3, 4)},
+			{0, random(rng_state, 1, 2)},
+			{random(rng_state, 1, 2), 0},
+		};
+		
+		for (u32 i = 0; i < 8; i++) {
+			u32 x = x_origin + ring_offsets[i].x;
+			u32 y = y_origin + ring_offsets[i].y;
+			
+			set_height(map, x, y, 7);
+			set_surface(map, x, y, SURFACE_MARSH);
+		}
+		
+		struct {
+			Coords rocks_base;
+			Coords oil_offset;
+		} sides[4] = {
+			{{random(rng_state, 2, 3), 0}, {0, 1}}, 
+			{{5, random(rng_state, 2, 3)}, {-1, 0}}, 
+			{{random(rng_state, 2, 3), 5}, {0, -1}}, 
+			{{0, random(rng_state, 2, 3)}, {1, 0}},
+		};
+		
+		for (u32 i = 0; i < 4; i++) {
+			u32 x_rocks = x_origin + sides[i].rocks_base.x;
+			u32 y_rocks = y_origin + sides[i].rocks_base.y;
+			
+			set_height(map, x_rocks, y_rocks, 8);
+			set_surface(map, x_rocks, y_rocks, SURFACE_ROCKS);
+			
+			if (cage_rock_chance >= (u32)random(rng_state, 0, 100)
+			&& !has_mirror_overlap_rectangle(x_rocks, y_rocks, 1, 1))
+				place_rock(map, x_rocks, y_rocks, 1);
+			
+			for (u32 j = 1; j <= 2; j++) {
+				u32 x_oil = x_rocks + (sides[i].oil_offset.x * j);
+				u32 y_oil = y_rocks + (sides[i].oil_offset.y * j);
+				
+				set_height(map, x_oil, y_oil, 4);
+				set_surface(map, x_oil, y_oil, SURFACE_OIL);
 			}
 		}
 		

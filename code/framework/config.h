@@ -51,7 +51,8 @@ typedef struct Config {
 	
 	bool generate_ruins;
 	Range ruin_blob_count_range;
-	Range ruin_blob_size_range;
+	Range ruin_blob_step_count_range;
+	Range ruin_blob_grow_count_range;
 	i32 ruin_count_per_blob_modifier;
 	
 	bool generate_quarry_spots;
@@ -72,7 +73,8 @@ typedef struct Config {
 	
 	bool generate_trees;
 	Range tree_blob_count_range;
-	Range tree_blob_size_range;
+	Range tree_blob_step_count_range;
+	Range tree_blob_grow_count_range;
 	
 	bool generate_animals;
 	bool generate_deer;

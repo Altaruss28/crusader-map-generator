@@ -73,11 +73,12 @@ static struct {
 	
 	{"generate_ruins", offsetof(Config, generate_ruins), CFT_BOOL, {0, 0}, {0, 0}, NULL, false},
 	{"ruin_blob_count_range", offsetof(Config, ruin_blob_count_range), CFT_RANGE, {1, 10000}, {0, 0}, NULL, false},
-	{"ruin_blob_size_range", offsetof(Config, ruin_blob_size_range), CFT_RANGE, {1, 10000}, {0, 0}, NULL, false},
+	{"ruin_blob_step_count_range", offsetof(Config, ruin_blob_step_count_range), CFT_RANGE, {1, 10000}, {0, 0}, NULL, false},
+	{"ruin_blob_grow_count_range", offsetof(Config, ruin_blob_grow_count_range), CFT_RANGE, {1, 10000}, {0, 0}, NULL, false},
 	{"ruin_count_per_blob_modifier", offsetof(Config, ruin_count_per_blob_modifier), CFT_INT, {1, 1000}, {0, 0}, NULL, false},
 	
 	{"generate_quarry_spots", offsetof(Config, generate_quarry_spots), CFT_BOOL, {0, 0}, {0, 0}, NULL, false},
-	{"quarry_spot_count_range", offsetof(Config, quarry_spot_count_range), CFT_RANGE, {1, 10000}, {0, 0}, NULL, false},
+	{"quarry_spot_count_range", offsetof(Config, quarry_spot_count_range), CFT_RANGE, {1, 1000}, {0, 0}, NULL, false},
 	{"quarry_spot_size_range", offsetof(Config, quarry_spot_size_range), CFT_RANGE, {1, 10000}, {0, 0}, NULL, false},
 	{"quarry_spot_stone_share", offsetof(Config, quarry_spot_stone_share), CFT_INT, {1, 100}, {0, 0}, NULL, false},
 	{"quarry_spot_gravel_share", offsetof(Config, quarry_spot_gravel_share), CFT_INT, {1, 100}, {0, 0}, NULL, false},
@@ -94,7 +95,8 @@ static struct {
 	
 	{"generate_trees", offsetof(Config, generate_trees), CFT_BOOL, {0, 0}, {0, 0}, NULL, false},
 	{"tree_blob_count_range", offsetof(Config, tree_blob_count_range), CFT_RANGE, {1, 10000}, {0, 0}, NULL, false},
-	{"tree_blob_size_range", offsetof(Config, tree_blob_size_range), CFT_RANGE, {1, 10000}, {0, 0}, NULL, false},
+	{"tree_blob_step_count_range", offsetof(Config, tree_blob_step_count_range), CFT_RANGE, {1, 10000}, {0, 0}, NULL, false},
+	{"tree_blob_grow_count_range", offsetof(Config, tree_blob_grow_count_range), CFT_RANGE, {1, 10000}, {0, 0}, NULL, false},
 	
 	{"generate_animals", offsetof(Config, generate_animals), CFT_BOOL, {0, 0}, {0, 0}, NULL, false},
 	{"generate_deer", offsetof(Config, generate_deer), CFT_BOOL, {0, 0}, {0, 0}, NULL, false},

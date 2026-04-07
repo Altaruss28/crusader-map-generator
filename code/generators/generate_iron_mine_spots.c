@@ -4,37 +4,6 @@
 #include "config.h"
 #include "helpers.h"
 
-typedef struct VarTileSpec {
-	Range x_offset_range;
-	Range y_offset_range;
-	Surface surface;
-} VarTileSpec;
-
-static const VarTileSpec iron_mine_spot_composition[] = {
-	{{3, 3}, {2, 2}, SURFACE_IRON},
-	{{3, 3}, {3, 3}, SURFACE_IRON},
-	{{2, 2}, {3, 3}, SURFACE_IRON},
-	{{2, 2}, {2, 2}, SURFACE_IRON},
-	
-	{{3, 4}, {1, 1}, SURFACE_IRON},
-	{{4, 4}, {1, 2}, SURFACE_IRON},
-	{{4, 4}, {3, 4}, SURFACE_IRON},
-	{{3, 4}, {4, 4}, SURFACE_IRON},
-	{{1, 2}, {4, 4}, SURFACE_IRON},
-	{{1, 1}, {3, 4}, SURFACE_IRON},
-	{{1, 1}, {1, 2}, SURFACE_IRON},
-	{{1, 2}, {1, 1}, SURFACE_IRON},
-	
-	{{3, 4}, {0, 0}, SURFACE_ROCKS},
-	{{5, 5}, {1, 2}, SURFACE_ROCKS},
-	{{5, 5}, {3, 4}, SURFACE_ROCKS},
-	{{3, 4}, {5, 5}, SURFACE_ROCKS},
-	{{1, 2}, {5, 5}, SURFACE_ROCKS},
-	{{0, 0}, {3, 4}, SURFACE_ROCKS},
-	{{0, 0}, {1, 2}, SURFACE_ROCKS},
-	{{1, 2}, {0, 0}, SURFACE_ROCKS},
-};
-
 bool generate_iron_mine_spots(Map *map, Config *config, u32 *rng_state, DynamicString *logs)
 {
 	bool ret = false;
@@ -78,27 +47,42 @@ bool generate_iron_mine_spots(Map *map, Config *config, u32 *rng_state, DynamicS
 		
 		if (has_mirror_overlap_rectangle(x_origin + 1, y_origin + 1, 4, 4)) continue;
 		
-		for (u32 tile_index = 0; tile_index < sizeof(iron_mine_spot_composition) / sizeof(iron_mine_spot_composition[0]); tile_index++) {
-			
-			VarTileSpec tile_spec = iron_mine_spot_composition[tile_index];
-			
-			u32 x = x_origin + random(rng_state, tile_spec.x_offset_range.min, tile_spec.x_offset_range.max);
-			u32 y = y_origin + random(rng_state, tile_spec.y_offset_range.min, tile_spec.y_offset_range.max);
-			
-			set_surface(map, x, y, tile_spec.surface);
-			
-			if (tile_spec.surface != SURFACE_ROCKS
-			|| cage_rock_chance < (u32)random(rng_state, 1, 100)
-			|| has_mirror_overlap_rectangle(x, y, 1, 1)) continue;
-			
-			if (!place_rock(map, x, y, 1)) goto out;
-			
-		}
-		
 		for (u32 x = x_origin; x < x_origin + 6; x++) {
 			for (u32 y = y_origin; y < y_origin + 6; y++) {
 				set_feature(map, x, y, FEATURE_IRON_MINE_SPOT);
 			}
+		}
+		
+		Coords middle_iron[4] = {{3, 2}, {3, 3}, {2, 3}, {2, 2}};
+		Coords corner_iron[4] = {{4, 1}, {4, 4}, {1, 4}, {1, 1}};
+		
+		struct {
+			Coords rocks_base;
+			Coords iron_offset;
+		} sides[4] = {
+			{{random(rng_state, 2, 3), 0}, {0, 1}}, 
+			{{5, random(rng_state, 2, 3)}, {-1, 0}}, 
+			{{random(rng_state, 2, 3), 5}, {0, -1}}, 
+			{{0, random(rng_state, 2, 3)}, {1, 0}},
+		};
+		
+		for (u32 i = 0; i < 4; i++) {
+			set_surface(map, x_origin + middle_iron[i].x, y_origin + middle_iron[i].y, SURFACE_IRON);
+			if (random(rng_state, 0, 1)) set_surface(map, x_origin + corner_iron[i].x, y_origin + corner_iron[i].y, SURFACE_IRON);
+			
+			u32 x_side_rocks = x_origin + sides[i].rocks_base.x;
+			u32 y_side_rocks = y_origin + sides[i].rocks_base.y;
+			
+			u32 x_side_iron = x_side_rocks + sides[i].iron_offset.x;
+			u32 y_side_iron = y_side_rocks + sides[i].iron_offset.y;
+			
+			set_surface(map, x_side_rocks, y_side_rocks, SURFACE_ROCKS);
+			
+			if (cage_rock_chance >= (u32)random(rng_state, 0, 100)
+			&& !has_mirror_overlap_rectangle(x_side_rocks, y_side_rocks, 1, 1)) 
+				place_rock(map, x_side_rocks, y_side_rocks, 1);
+			
+			set_surface(map, x_side_iron, y_side_iron, SURFACE_IRON);
 		}
 		
 		spot_index++;

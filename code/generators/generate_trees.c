@@ -30,7 +30,8 @@ bool generate_trees(Map *map, Config *config, u32 *rng_state, DynamicString *log
 	u32 blob_count = random(rng_state, blob_count_range.min, blob_count_range.max) * feature_count_multiplier;
 	u32 blobs_placed = 0;
 	
-	Range blob_size_range = config->tree_blob_size_range;
+	Range blob_step_count_range = config->tree_blob_step_count_range;
+	Range blob_grow_count_range = config->tree_blob_grow_count_range;
 	
 	if (!(available_origins = init_coords_array())) goto out;
 	
@@ -56,7 +57,9 @@ bool generate_trees(Map *map, Config *config, u32 *rng_state, DynamicString *log
 		for (u32 blob_index = 0; blob_index < blob_count; blob_index++) {
 			
 			blob_tile_offsets->usage = 0;
-			if (!insert_blob(blob_tile_offsets, random(rng_state, blob_size_range.min, blob_size_range.max), rng_state)) goto out;
+			u32 step_count = random(rng_state, blob_step_count_range.min, blob_step_count_range.max);
+			u32 grow_count = random(rng_state, blob_grow_count_range.min, blob_grow_count_range.max);
+			if (!insert_blob(blob_tile_offsets, step_count, grow_count, rng_state)) goto out;
 			
 			for (u32 origin_index = 0; origin_index < available_origins->usage; origin_index++) {
 				

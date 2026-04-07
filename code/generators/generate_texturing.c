@@ -48,7 +48,7 @@ bool generate_texturing(Map *map, Config *config, u32 *rng_state, DynamicString 
 		
 		for (u32 blob_index = 0; blob_index < blob_count; blob_index++) {
 			
-			if (!insert_blob(blob_tiles, random(rng_state, blob_size_range.min, blob_size_range.max), rng_state)) goto out;
+			if (!insert_blob(blob_tiles, 0, random(rng_state, blob_size_range.min, blob_size_range.max), rng_state)) goto out;
 			
 			u32 chosen_tile_index = random(rng_state, 0, valid_tiles->usage - 1);
 			u32 x_origin = valid_tiles->data[chosen_tile_index].x;
