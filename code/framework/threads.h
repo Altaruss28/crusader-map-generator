@@ -11,7 +11,6 @@ typedef struct GeneratorThreadArguments {
 	u32 *run_counter;
 	u32 start_time_win;
 	time_t start_time_unix;
-	char *version_string;
 	CRITICAL_SECTION *run_counter_access;
 	CRITICAL_SECTION *injection_access;
 	CRITICAL_SECTION *stdout_access;

@@ -9,8 +9,6 @@
 #include <time.h>
 #include <windows.h>
 
-static char version_string[] = "v0";
-
 int main(void)
 {
 	u32 cpu_core_count = 0;
@@ -23,7 +21,7 @@ int main(void)
 		"Enter \"r\" to run the generator\n"
 		"Enter \"q\" to quit the program\n"
 		"\n",
-		version_string
+		VERSION
 	);
 	
 	while (true) {
@@ -108,7 +106,6 @@ int main(void)
 			.run_counter = &run_counter,
 			.start_time_win = start_time_win,
 			.start_time_unix = start_time_unix,
-			.version_string = version_string,
 			.run_counter_access = &run_counter_access,
 			.injection_access = &injection_access,
 			.stdout_access = &stdout_access,
