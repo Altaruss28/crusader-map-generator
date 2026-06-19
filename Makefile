@@ -1,78 +1,85 @@
-VERSION = v2026.06.19
+VERSION = v2026.06.20
 MAKEFLAGS += -s
 
 CODE = \
 	code/main.c \
 	$(wildcard code/framework/*.c) \
 	$(wildcard code/generators/*.c)
-
-INCLUDE = \
+CPPFLAGS = \
+	-DVERSION=\"$(VERSION)\" \
 	-Icode/framework \
 	-Icode/generators
-
-FLAGS = \
-	-DVERSION=\"$(VERSION)\" \
-	$(INCLUDE) \
+CCFLAGS = \
 	-std=c99 \
 	-Wall -Wextra -Wshadow \
-	-O2 -flto -s \
+	-O2 \
+	-flto \
 	-MMD -MP
+LDFLAGS = \
+	-flto \
+	-s
 
 CC_X64 = x86_64-w64-mingw32-gcc
 CC_X86 = i686-w64-mingw32-gcc
 WINDRES_X64 = x86_64-w64-mingw32-windres
 WINDRES_X86 = i686-w64-mingw32-windres
 
-INTERMEDIATES_X64 = build/x64/intermediates
-INTERMEDIATES_X86 = build/x86/intermediates
-OUTPUT_X64 = build/x64/output
-OUTPUT_X86 = build/x86/output
+ZIP = zip -q -r -9
 
-OBJ_CODE_X64 = $(patsubst %.c,$(INTERMEDIATES_X64)/%.o,$(CODE))
-OBJ_CODE_X86 = $(patsubst %.c,$(INTERMEDIATES_X86)/%.o,$(CODE))
-OBJ_RESOURCES_X64 = $(INTERMEDIATES_X64)/resources/resources.o
-OBJ_RESOURCES_X86 = $(INTERMEDIATES_X86)/resources/resources.o
+DIR_X64 = build/x64
+DIR_X86 = build/x86
+
+OBJ_CODE_X64 = $(patsubst %.c,$(DIR_X64)/intermediates/%.o,$(CODE))
+OBJ_CODE_X86 = $(patsubst %.c,$(DIR_X86)/intermediates/%.o,$(CODE))
+OBJ_RESOURCES_X64 = $(DIR_X64)/intermediates/resources/resources.o
+OBJ_RESOURCES_X86 = $(DIR_X86)/intermediates/resources/resources.o
 
 .PHONY: all x64 x86 clean
 
 all: x64 x86
-x64: $(OUTPUT_X64)/cmg.exe $(OUTPUT_X64)/config.txt
-x86: $(OUTPUT_X86)/cmg.exe $(OUTPUT_X86)/config.txt
+x64: $(DIR_X64)/cmg/cmg.exe $(DIR_X64)/cmg/config.txt $(DIR_X64)/cmg-$(VERSION)-windows-x64.zip
+x86: $(DIR_X86)/cmg/cmg.exe $(DIR_X86)/cmg/config.txt $(DIR_X86)/cmg-$(VERSION)-windows-x86.zip
 clean:
 	rm -rf build
 
 # x64
 
 -include $(OBJ_CODE_X64:.o=.d)
-$(INTERMEDIATES_X64)/%.o: %.c
+$(DIR_X64)/intermediates/%.o: %.c
 	mkdir -p $(dir $@)
-	$(CC_X64) $(FLAGS) -c $< -o $@
-
+	$(CC_X64) $(CPPFLAGS) $(CCFLAGS) -c $< -o $@
 $(OBJ_RESOURCES_X64): resources/resources.rc
 	mkdir -p $(dir $@)
-	$(WINDRES_X64) $< -O coff -o $@
+	$(WINDRES_X64) $< -o $@
 
-$(OUTPUT_X64)/cmg.exe: $(OBJ_CODE_X64) $(OBJ_RESOURCES_X64)
-	mkdir -p $(OUTPUT_X64)
-	$(CC_X64) $(FLAGS) $^ -o $@
-$(OUTPUT_X64)/config.txt: resources/config.txt
-	mkdir -p $(OUTPUT_X64)
+$(DIR_X64)/cmg/cmg.exe: $(OBJ_CODE_X64) $(OBJ_RESOURCES_X64)
+	mkdir -p $(DIR_X64)/cmg
+	$(CC_X64) $(LDFLAGS) $^ -o $@
+$(DIR_X64)/cmg/config.txt: resources/config.txt
+	mkdir -p $(DIR_X64)/cmg
 	cp $< $@
+
+$(DIR_X64)/cmg-$(VERSION)-windows-x64.zip: $(DIR_X64)/cmg/cmg.exe $(DIR_X64)/cmg/config.txt
+	mkdir -p $(DIR_X64)
+	cd $(DIR_X64) && $(ZIP) cmg-$(VERSION)-windows-x64.zip cmg/
 
 # x86
 
 -include $(OBJ_CODE_X86:.o=.d)
-$(INTERMEDIATES_X86)/%.o: %.c
+$(DIR_X86)/intermediates/%.o: %.c
 	mkdir -p $(dir $@)
-	$(CC_X86) $(FLAGS) -c $< -o $@
-
+	$(CC_X86) $(CPPFLAGS) $(CCFLAGS) -c $< -o $@
 $(OBJ_RESOURCES_X86): resources/resources.rc
 	mkdir -p $(dir $@)
-	$(WINDRES_X86) $< -O coff -o $@
+	$(WINDRES_X86) $< -o $@
 
-$(OUTPUT_X86)/cmg.exe: $(OBJ_CODE_X86) $(OBJ_RESOURCES_X86)
-	mkdir -p $(OUTPUT_X86)
-	$(CC_X86) $(FLAGS) $^ -o $@
-$(OUTPUT_X86)/config.txt: resources/config.txt
-	mkdir -p $(OUTPUT_X86)
+$(DIR_X86)/cmg/cmg.exe: $(OBJ_CODE_X86) $(OBJ_RESOURCES_X86)
+	mkdir -p $(DIR_X86)/cmg
+	$(CC_X86) $(LDFLAGS) $^ -o $@
+$(DIR_X86)/cmg/config.txt: resources/config.txt
+	mkdir -p $(DIR_X86)/cmg
 	cp $< $@
+
+$(DIR_X86)/cmg-$(VERSION)-windows-x86.zip: $(DIR_X86)/cmg/cmg.exe $(DIR_X86)/cmg/config.txt
+	mkdir -p $(DIR_X86)
+	cd $(DIR_X86) && $(ZIP) cmg-$(VERSION)-windows-x86.zip cmg/
