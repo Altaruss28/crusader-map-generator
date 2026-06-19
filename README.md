@@ -1,7 +1,7 @@
 
 # Crusader Map Generator
 
-Procedural map generator for Stronghold Crusader 1
+Procedural map generator for Stronghold Crusader
 
 ![Screenshot](screenshot.png)
 
@@ -9,7 +9,7 @@ Procedural map generator for Stronghold Crusader 1
 
 ### Requirements
 
-Windows 7 or newer
+Windows 7 or newer, or Wine
 
 Stronghold Crusader
 - v1.41 and v1.41-E in latin-alphabet localizations are supported

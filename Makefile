@@ -10,7 +10,7 @@ CPPFLAGS = \
 	-Icode/framework \
 	-Icode/generators
 CCFLAGS = \
-	-std=c99 \
+	-std=c23 \
 	-Wall -Wextra -Wshadow \
 	-O2 \
 	-flto \
