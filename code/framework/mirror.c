@@ -1,164 +1,210 @@
 #include "mirror.h"
-#include "utils.h"
-#include "map.h"
-#include "config.h"
+
 #include <string.h>
 
-GetMirrorPointsFnPtr get_mirror_points;
+#include "common.h"
+#include "map.h"
 
-enum {
-	MIRRORING_SIZE = MAP_SIZE - 2,
-};
+MirrorPointsInitFnPtr mirror_points_init;
 
-void get_mirror_points_none(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size)
+constexpr int MIRRORING_SIZE = MAP_SIZE - 2;
+
+MirrorPoints mirror_points_init_none(int x, int y, int)
 {
-	(void)object_size;
-	current_mirror_points->points[0] = (Coords){ .x = x, .y = y };
-	current_mirror_points->count = 1;
+	MirrorPoints mirror_points;
+
+	mirror_points.points[0] = (Coords){.x = x, .y = y};
+	mirror_points.count = 1;
+
+	return mirror_points;
 }
-void get_mirror_points_x(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size)
+MirrorPoints mirror_points_init_x(int x, int y, int object_size)
 {
-	u32 shift = object_size - 1;
-	current_mirror_points->points[0] = (Coords){ .x = x, .y = y };
-	current_mirror_points->points[1] = (Coords){ .x = x, .y = MIRRORING_SIZE - y - shift };
-	current_mirror_points->count = 2;
+	MirrorPoints mirror_points;
+	int shift = object_size - 1;
+
+	mirror_points.points[0] = (Coords){.x = x, .y = y};
+	mirror_points.points[1] = (Coords){.x = x, .y = MIRRORING_SIZE - y - shift};
+	mirror_points.count = 2;
+
+	return mirror_points;
 }
-void get_mirror_points_y(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size)
+MirrorPoints mirror_points_init_y(int x, int y, int object_size)
 {
-	u32 shift = object_size - 1;
-	current_mirror_points->points[0] = (Coords){ .x = x, .y = y };
-	current_mirror_points->points[1] = (Coords){ .x = MIRRORING_SIZE - x - shift, .y = y };
-	current_mirror_points->count = 2;
+	MirrorPoints mirror_points;
+	int shift = object_size - 1;
+
+	mirror_points.points[0] = (Coords){.x = x, .y = y};
+	mirror_points.points[1] = (Coords){.x = MIRRORING_SIZE - x - shift, .y = y};
+	mirror_points.count = 2;
+
+	return mirror_points;
 }
-void get_mirror_points_quad(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size)
+MirrorPoints mirror_points_init_quad(int x, int y, int object_size)
 {
-	u32 shift = object_size - 1;
-	current_mirror_points->points[0] = (Coords){ .x = x, .y = y };
-	current_mirror_points->points[1] = (Coords){ .x = x, .y = MIRRORING_SIZE - y - shift };
-	current_mirror_points->points[2] = (Coords){ .x = MIRRORING_SIZE - x - shift, .y = y };
-	current_mirror_points->points[3] = (Coords){ .x = MIRRORING_SIZE - x - shift, .y = MIRRORING_SIZE - y - shift };
-	current_mirror_points->count = 4;
+	MirrorPoints mirror_points;
+	int shift = object_size - 1;
+
+	mirror_points.points[0] = (Coords){.x = x, .y = y};
+	mirror_points.points[1] = (Coords){.x = x, .y = MIRRORING_SIZE - y - shift};
+	mirror_points.points[2] = (Coords){.x = MIRRORING_SIZE - x - shift, .y = y};
+	mirror_points.points[3] = (Coords){.x = MIRRORING_SIZE - x - shift, .y = MIRRORING_SIZE - y - shift};
+	mirror_points.count = 4;
+
+	return mirror_points;
 }
-void get_mirror_points_d_x(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size)
+MirrorPoints mirror_points_init_d_x(int x, int y, int object_size)
 {
-	u32 shift = object_size - 1;
-	current_mirror_points->points[0] = (Coords){ .x = x, .y = y };
-	current_mirror_points->points[1] = (Coords){ .x = MIRRORING_SIZE - y - shift, .y = MIRRORING_SIZE - x - shift };
-	current_mirror_points->count = 2;
+	MirrorPoints mirror_points;
+	int shift = object_size - 1;
+
+	mirror_points.points[0] = (Coords){.x = x, .y = y};
+	mirror_points.points[1] = (Coords){.x = MIRRORING_SIZE - y - shift, .y = MIRRORING_SIZE - x - shift};
+	mirror_points.count = 2;
+
+	return mirror_points;
 }
-void get_mirror_points_d_y(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size)
+MirrorPoints mirror_points_init_d_y(int x, int y, int)
 {
-	(void)object_size;
-	current_mirror_points->points[0] = (Coords){ .x = x, .y = y };
-	current_mirror_points->points[1] = (Coords){ .x = y, .y = x };
-	current_mirror_points->count = 2;
+	MirrorPoints mirror_points;
+
+	mirror_points.points[0] = (Coords){.x = x, .y = y};
+	mirror_points.points[1] = (Coords){.x = y, .y = x};
+	mirror_points.count = 2;
+
+	return mirror_points;
 }
-void get_mirror_points_d_quad(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size)
+MirrorPoints mirror_points_init_d_quad(int x, int y, int object_size)
 {
-	u32 shift = object_size - 1;
-	current_mirror_points->points[0] = (Coords){ .x = x, .y = y };
-	current_mirror_points->points[1] = (Coords){ .x = MIRRORING_SIZE - y - shift, .y = MIRRORING_SIZE - x - shift };
-	current_mirror_points->points[2] = (Coords){ .x = y, .y = x };
-	current_mirror_points->points[3] = (Coords){ .x = MIRRORING_SIZE - x - shift, .y = MIRRORING_SIZE - y - shift };
-	current_mirror_points->count = 4;
+	MirrorPoints mirror_points;
+	int shift = object_size - 1;
+
+	mirror_points.points[0] = (Coords){.x = x, .y = y};
+	mirror_points.points[1] = (Coords){.x = MIRRORING_SIZE - y - shift, .y = MIRRORING_SIZE - x - shift};
+	mirror_points.points[2] = (Coords){.x = y, .y = x};
+	mirror_points.points[3] = (Coords){.x = MIRRORING_SIZE - x - shift, .y = MIRRORING_SIZE - y - shift};
+	mirror_points.count = 4;
+
+	return mirror_points;
 }
-void get_mirror_points_octa(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size)
+MirrorPoints mirror_points_init_octa(int x, int y, int object_size)
 {
-	u32 shift = object_size - 1;
-	current_mirror_points->points[0] = (Coords){ .x = x, .y = y };
-	current_mirror_points->points[1] = (Coords){ .x = x, .y = MIRRORING_SIZE - y - shift };
-	current_mirror_points->points[2] = (Coords){ .x = MIRRORING_SIZE - x - shift, .y = y };
-	current_mirror_points->points[3] = (Coords){ .x = MIRRORING_SIZE - y - shift, .y = MIRRORING_SIZE - x - shift };
-	current_mirror_points->points[4] = (Coords){ .x = y, .y = x };
-	current_mirror_points->points[5] = (Coords){ .x = y, .y = MIRRORING_SIZE - x - shift };
-	current_mirror_points->points[6] = (Coords){ .x = MIRRORING_SIZE - x - shift, .y = MIRRORING_SIZE - y - shift };
-	current_mirror_points->points[7] = (Coords){ .x = MIRRORING_SIZE - y - shift, .y = x };
-	current_mirror_points->count = 8;
+	MirrorPoints mirror_points;
+	int shift = object_size - 1;
+
+	mirror_points.points[0] = (Coords){.x = x, .y = y};
+	mirror_points.points[1] = (Coords){.x = x, .y = MIRRORING_SIZE - y - shift};
+	mirror_points.points[2] = (Coords){.x = MIRRORING_SIZE - x - shift, .y = y};
+	mirror_points.points[3] = (Coords){.x = MIRRORING_SIZE - y - shift, .y = MIRRORING_SIZE - x - shift};
+	mirror_points.points[4] = (Coords){.x = y, .y = x};
+	mirror_points.points[5] = (Coords){.x = y, .y = MIRRORING_SIZE - x - shift};
+	mirror_points.points[6] = (Coords){.x = MIRRORING_SIZE - x - shift, .y = MIRRORING_SIZE - y - shift};
+	mirror_points.points[7] = (Coords){.x = MIRRORING_SIZE - y - shift, .y = x};
+	mirror_points.count = 8;
+
+	return mirror_points;
 }
-void get_mirror_points_2_point(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size)
+MirrorPoints mirror_points_init_2_point(int x, int y, int object_size)
 {
-	u32 shift = object_size - 1;
-	current_mirror_points->points[0] = (Coords){ .x = x, .y = y };
-	current_mirror_points->points[1] = (Coords){ .x = MIRRORING_SIZE - x - shift, .y = MIRRORING_SIZE - y - shift };
-	current_mirror_points->count = 2;
+	MirrorPoints mirror_points;
+	int shift = object_size - 1;
+
+	mirror_points.points[0] = (Coords){.x = x, .y = y};
+	mirror_points.points[1] = (Coords){.x = MIRRORING_SIZE - x - shift, .y = MIRRORING_SIZE - y - shift};
+	mirror_points.count = 2;
+
+	return mirror_points;
 }
-void get_mirror_points_4_point(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size)
+MirrorPoints mirror_points_init_4_point(int x, int y, int object_size)
 {
-	u32 shift = object_size - 1;
-	current_mirror_points->points[0] = (Coords){ .x = x, .y = y };
-	current_mirror_points->points[1] = (Coords){ .x = y, .y = MIRRORING_SIZE - x - shift };
-	current_mirror_points->points[2] = (Coords){ .x = MIRRORING_SIZE - x - shift, .y = MIRRORING_SIZE - y - shift };
-	current_mirror_points->points[3] = (Coords){ .x = MIRRORING_SIZE - y - shift, .y = x };
-	current_mirror_points->count = 4;
+	MirrorPoints mirror_points;
+	int shift = object_size - 1;
+
+	mirror_points.points[0] = (Coords){.x = x, .y = y};
+	mirror_points.points[1] = (Coords){.x = y, .y = MIRRORING_SIZE - x - shift};
+	mirror_points.points[2] = (Coords){.x = MIRRORING_SIZE - x - shift, .y = MIRRORING_SIZE - y - shift};
+	mirror_points.points[3] = (Coords){.x = MIRRORING_SIZE - y - shift, .y = x};
+	mirror_points.count = 4;
+
+	return mirror_points;
 }
 
-void init_mirror(Config *config)
+void mirror_init(const char *mirror_mode)
 {
-	char *mirror_mode = config->mirror_mode;
-	
-	if (strcmp(mirror_mode, "none") == 0) {
-		get_mirror_points = get_mirror_points_none;
-		config->mirror_point_count = 1;
-	} else if (strcmp(mirror_mode, "x") == 0) {
-		get_mirror_points = get_mirror_points_x;
-		config->mirror_point_count = 2;
-	} else if (strcmp(mirror_mode, "y") == 0) {
-		get_mirror_points = get_mirror_points_y;
-		config->mirror_point_count = 2;
-	} else if (strcmp(mirror_mode, "quad") == 0) {
-		get_mirror_points = get_mirror_points_quad;
-		config->mirror_point_count = 4;
-	} else if (strcmp(mirror_mode, "d_x") == 0) {
-		get_mirror_points = get_mirror_points_d_x;
-		config->mirror_point_count = 2;
-	} else if (strcmp(mirror_mode, "d_y") == 0) {
-		get_mirror_points = get_mirror_points_d_y;
-		config->mirror_point_count = 2;
-	} else if (strcmp(mirror_mode, "d_quad") == 0) {
-		get_mirror_points = get_mirror_points_d_quad;
-		config->mirror_point_count = 4;
-	} else if (strcmp(mirror_mode, "octa") == 0) {
-		get_mirror_points = get_mirror_points_octa;
-		config->mirror_point_count = 8;
-	} else if (strcmp(mirror_mode, "2_point") == 0) {
-		get_mirror_points = get_mirror_points_2_point;
-		config->mirror_point_count = 2;
-	} else if (strcmp(mirror_mode, "4_point") == 0) {
-		get_mirror_points = get_mirror_points_4_point;
-		config->mirror_point_count = 4;
+	if (strcmp(mirror_mode, "none") == 0)
+		mirror_points_init = mirror_points_init_none;
+	else if (strcmp(mirror_mode, "x") == 0)
+		mirror_points_init = mirror_points_init_x;
+	else if (strcmp(mirror_mode, "y") == 0)
+		mirror_points_init = mirror_points_init_y;
+	else if (strcmp(mirror_mode, "quad") == 0)
+		mirror_points_init = mirror_points_init_quad;
+	else if (strcmp(mirror_mode, "d_x") == 0)
+		mirror_points_init = mirror_points_init_d_x;
+	else if (strcmp(mirror_mode, "d_y") == 0)
+		mirror_points_init = mirror_points_init_d_y;
+	else if (strcmp(mirror_mode, "d_quad") == 0)
+		mirror_points_init = mirror_points_init_d_quad;
+	else if (strcmp(mirror_mode, "octa") == 0)
+		mirror_points_init = mirror_points_init_octa;
+	else if (strcmp(mirror_mode, "2_point") == 0)
+		mirror_points_init = mirror_points_init_2_point;
+	else if (strcmp(mirror_mode, "4_point") == 0)
+		mirror_points_init = mirror_points_init_4_point;
+}
+
+bool mirror_check_overlap_rectangle(int x_origin, int y_origin, int rectangle_width, int rectangle_length)
+{
+	int mp_count = mirror_points_init(0, 0, 1).count;
+	if (mp_count == 1)
+		return false;
+
+	MirrorPoints mp_tl = mirror_points_init(x_origin, y_origin, 1);
+	MirrorPoints mp_br = mirror_points_init(x_origin + rectangle_width - 1, y_origin + rectangle_length - 1, 1);
+
+	typedef struct {
+		int l, r, t, b;
+	} Rectangle;
+
+	Rectangle rects[mp_count];
+
+	for (int i = 0; i < mp_count; ++i) {
+		int x1 = mp_tl.points[i].x;
+		int x2 = mp_br.points[i].x;
+		int y1 = mp_tl.points[i].y;
+		int y2 = mp_br.points[i].y;
+
+		rects[i].l = min_int(x1, x2);
+		rects[i].r = max_int(x1, x2);
+		rects[i].t = min_int(y1, y2);
+		rects[i].b = max_int(y1, y2);
 	}
-}
 
-bool has_mirror_overlap_rectangle(u32 x_origin, u32 y_origin, u32 rectangle_width, u32 rectangle_length)
-{
-	u32 check_matrix[FLAG_MATRIX_WORD_COUNT];
-	clear_all_flags(check_matrix);
-	
-	for (u32 x = x_origin; x < x_origin + rectangle_width; x++) {
-		for (u32 y = y_origin; y < y_origin + rectangle_length; y++) {
-			
-			if (test_flag(check_matrix, x, y)) return true;
-			set_flag(check_matrix, x, y, true);
-			
-		}
-	}
-	
+	Rectangle zrect = rects[0];
+
+	for (int i = 1; i < mp_count; ++i)
+		if (zrect.l <= rects[i].r
+			&& zrect.r >= rects[i].l
+			&& zrect.t <= rects[i].b
+			&& zrect.b >= rects[i].t)
+			return true;
+
 	return false;
 }
-bool has_mirror_overlap_array(CoordsArray *claimed_tiles)
+bool mirror_check_overlap_array(const CoordsArray *claimed_tiles)
 {
-	u32 check_matrix[FLAG_MATRIX_WORD_COUNT];
-	clear_all_flags(check_matrix);
-	
-	for (u32 tile_index = 0; tile_index < claimed_tiles->usage; tile_index++) {
-		
-		u32 x = claimed_tiles->data[tile_index].x;
-		u32 y = claimed_tiles->data[tile_index].y;
-		
-		if (test_flag(check_matrix, x, y)) return true;
-		set_flag(check_matrix, x, y, true);
-		
+	if (mirror_points_init(0, 0, 1).count == 1)
+		return false;
+
+	map_flag_matrix_t check_matrix[MAP_FLAG_MATRIX_WORD_COUNT] = {};
+
+	for (usize i = 0; i < claimed_tiles->usage; ++i) {
+		int x = claimed_tiles->data[i].x;
+		int y = claimed_tiles->data[i].y;
+		if (map_flag_matrix_test(check_matrix, x, y))
+			return true;
+		map_flag_matrix_set(check_matrix, x, y, true);
 	}
-	
+
 	return false;
 }

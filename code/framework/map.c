@@ -1,217 +1,172 @@
 #include "map.h"
-#include "utils.h"
-#include "mirror.h"
+
+#include <limits.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
-Map *init_map(void)
+#include "common.h"
+#include "mirror.h"
+
+Map *map_init(void)
 {
-	Map *map = malloc(sizeof(Map));
-	if (!map) goto err;
-	
-	map->tile_matrix = NULL;
-	
-	u32 initial_object_array_capacity = 8;
-	
-	map->building_array.data = NULL;
-	map->pitch_ditch_array.data = NULL;
-	map->wall_array.data = NULL;
-	map->rock_array.data = NULL;
-	map->plant_array.data = NULL;
-	map->unit_array.data = NULL;
-	map->animal_array.data = NULL;
-	
+	Map *map = malloc(sizeof(*map));
+	if (!map)
+		goto err;
+
+	int initial_capacity = 8;
+
+	map->building_array.data = nullptr;
+	map->pitch_ditch_array.data = nullptr;
+	map->wall_array.data = nullptr;
+	map->rock_array.data = nullptr;
+	map->plant_array.data = nullptr;
+	map->unit_array.data = nullptr;
+	map->animal_group_array.data = nullptr;
+
 	map->building_array.usage = 0;
 	map->pitch_ditch_array.usage = 0;
 	map->wall_array.usage = 0;
 	map->rock_array.usage = 0;
 	map->plant_array.usage = 0;
 	map->unit_array.usage = 0;
-	map->animal_array.usage = 0;
-	
-	map->building_array.capacity = initial_object_array_capacity;
-	map->pitch_ditch_array.capacity = initial_object_array_capacity;
-	map->wall_array.capacity = initial_object_array_capacity;
-	map->rock_array.capacity = initial_object_array_capacity;
-	map->plant_array.capacity = initial_object_array_capacity;
-	map->unit_array.capacity = initial_object_array_capacity;
-	map->animal_array.capacity = initial_object_array_capacity;
-	
-	map->tile_matrix = malloc((MAP_SIZE * sizeof(Tile *)) + (MAP_SIZE * MAP_SIZE * sizeof(Tile)));
-	if (!map->tile_matrix) goto err;
-	
-	map->building_array.data = malloc(sizeof(BuildingObject) * initial_object_array_capacity);
-	if (!map->building_array.data) goto err;
-	map->pitch_ditch_array.data = malloc(sizeof(PitchDitchObject) * initial_object_array_capacity);
-	if (!map->pitch_ditch_array.data) goto err;
-	map->wall_array.data = malloc(sizeof(WallObject) * initial_object_array_capacity);
-	if (!map->wall_array.data) goto err;
-	map->rock_array.data = malloc(sizeof(RockObject) * initial_object_array_capacity);
-	if (!map->rock_array.data) goto err;
-	map->plant_array.data = malloc(sizeof(PlantObject) * initial_object_array_capacity);
-	if (!map->plant_array.data) goto err;
-	map->unit_array.data = malloc(sizeof(UnitObject) * initial_object_array_capacity);
-	if (!map->unit_array.data) goto err;
-	map->animal_array.data = malloc(sizeof(AnimalObject) * initial_object_array_capacity);
-	if (!map->animal_array.data) goto err;
-	
-	Tile *data_start = (Tile *)(map->tile_matrix + MAP_SIZE);
-	for (u32 i = 0; i < MAP_SIZE; i++) {
-		map->tile_matrix[i] = data_start + (i * MAP_SIZE);
-	}
-	
-	for (i32 x = 0; x < MAP_SIZE; x++) {
-		for (i32 y = 0; y < MAP_SIZE; y++) {
-			
-			u32 distance_from_center = abs(199 - x) + abs(199 - y);
-			
-			if (distance_from_center <= 197) {
+	map->animal_group_array.usage = 0;
+
+	map->building_array.capacity = initial_capacity;
+	map->pitch_ditch_array.capacity = initial_capacity;
+	map->wall_array.capacity = initial_capacity;
+	map->rock_array.capacity = initial_capacity;
+	map->plant_array.capacity = initial_capacity;
+	map->unit_array.capacity = initial_capacity;
+	map->animal_group_array.capacity = initial_capacity;
+
+	if (!(map->building_array.data = malloc(map->building_array.capacity * sizeof(*map->building_array.data)))
+		|| !(map->pitch_ditch_array.data = malloc(map->pitch_ditch_array.capacity * sizeof(*map->pitch_ditch_array.data)))
+		|| !(map->wall_array.data = malloc(map->wall_array.capacity * sizeof(*map->wall_array.data)))
+		|| !(map->rock_array.data = malloc(map->rock_array.capacity * sizeof(*map->rock_array.data)))
+		|| !(map->plant_array.data = malloc(map->plant_array.capacity * sizeof(*map->plant_array.data)))
+		|| !(map->unit_array.data = malloc(map->unit_array.capacity * sizeof(*map->unit_array.data)))
+		|| !(map->animal_group_array.data = malloc(map->animal_group_array.capacity * sizeof(*map->animal_group_array.data))))
+		goto err;
+
+	static_assert(MAP_SIZE == 400);
+	for (int x = 0; x < MAP_SIZE; ++x)
+		for (int y = 0; y < MAP_SIZE; ++y) {
+			int distance_from_center = abs(199 - x) + abs(199 - y);
+
+			if (distance_from_center <= 197)
 				map->tile_matrix[x][y].section = SECTION_VALID;
-			} else if (x + y >= 201 && x <= y + 198 && y <= x + 198 && x + y <= 597) {
+			else if (x + y >= 201 && x <= y + 198 && y <= x + 198 && x + y <= 597)
 				map->tile_matrix[x][y].section = SECTION_SACRIFICED;
-			} else if (x + y >= 199 && x <= y + 200 && y <= x + 200 && x + y <= 599) {
+			else if (x + y >= 199 && x <= y + 200 && y <= x + 200 && x + y <= 599)
 				map->tile_matrix[x][y].section = SECTION_BORDER;
-			} else {
+			else
 				map->tile_matrix[x][y].section = SECTION_PADDING;
-			}
-			
+
 			map->tile_matrix[x][y].distance_from_center = distance_from_center;
 			map->tile_matrix[x][y].feature = FEATURE_NONE;
 			map->tile_matrix[x][y].height = 8;
 			map->tile_matrix[x][y].surface = SURFACE_EARTH;
 			map->tile_matrix[x][y].object_flags = 0;
-			
 		}
-	}
-	
+
 	return map;
-	
+
 err:
-	free_map(map);
-	return NULL;
+	map_free(map);
+	return nullptr;
 }
-void free_map(Map *map)
+void map_free(Map *map)
 {
-	if (!map) return;
-	
-	free(map->tile_matrix);
-	
+	if (!map)
+		return;
+
 	free(map->building_array.data);
 	free(map->pitch_ditch_array.data);
 	free(map->wall_array.data);
 	free(map->rock_array.data);
 	free(map->plant_array.data);
 	free(map->unit_array.data);
-	free(map->animal_array.data);
-	
+	free(map->animal_group_array.data);
+
 	free(map);
 }
 
-bool is_in_bounds(i32 x, i32 y)
+bool map_check_bounds_point(int x, int y)
 {
 	return x >= 0 && x < MAP_SIZE && y >= 0 && y < MAP_SIZE;
 }
-bool is_in_bounds_rectangle(i32 x_origin, i32 y_origin, u32 rectangle_width, u32 rectangle_length)
+bool map_check_bounds_rectangle(int x_origin, int y_origin, int rectangle_width, int rectangle_length)
 {
-	if (!is_in_bounds(x_origin, y_origin)
-	|| !is_in_bounds(x_origin + rectangle_width - 1, y_origin + rectangle_length - 1)) return false;
+	if (!map_check_bounds_point(x_origin, y_origin)
+		|| !map_check_bounds_point(x_origin + rectangle_width - 1, y_origin + rectangle_length - 1))
+		return false;
 
 	return true;
 }
-bool is_in_bounds_array(CoordsArray *claimed_tiles)
+bool map_check_bounds_array(const CoordsArray *claimed_tiles)
 {
-	for (u32 i = 0; i < claimed_tiles->usage; i++) {
-		if (!is_in_bounds(claimed_tiles->data[i].x, claimed_tiles->data[i].y)) return false;
-	}
-	
+	for (usize i = 0; i < claimed_tiles->usage; ++i)
+		if (!map_check_bounds_point(claimed_tiles->data[i].x, claimed_tiles->data[i].y))
+			return false;
+
 	return true;
 }
 
-void set_flag(u32 *flag_matrix, u32 x, u32 y, bool apply_mirror)
+void map_flag_matrix_set(map_flag_matrix_t *flag_matrix, int x, int y, bool apply_mirror)
 {
-	MirrorPoints mirror_points;
-	
-	if (apply_mirror) {
-		get_mirror_points(&mirror_points, x, y, 1);
-	} else {
-		mirror_points.points[0] = (Coords){x, y};
-		mirror_points.count = 1;
-	}
-	
-	for (u32 i = 0; i < mirror_points.count; i++) {
-		
-		u32 bit_index = mirror_points.points[i].x * MAP_SIZE + mirror_points.points[i].y;
-		u32 word_index = bit_index / 32;
-		u32 bit_mask = 1U << (bit_index % 32);
-		
+	MirrorPoints mirror_points = apply_mirror ? mirror_points_init(x, y, 1) : mirror_points_init_none(x, y, 1);
+
+	for (int i = 0; i < mirror_points.count; ++i) {
+		int bit_index = mirror_points.points[i].x * MAP_SIZE + mirror_points.points[i].y;
+		int word_index = bit_index / (sizeof(map_flag_matrix_t) * CHAR_BIT);
+		map_flag_matrix_t bit_mask = 1U << (bit_index % (sizeof(map_flag_matrix_t) * CHAR_BIT));
 		flag_matrix[word_index] |= bit_mask;
-		
 	}
 }
-void clear_flag(u32 *flag_matrix, u32 x, u32 y, bool apply_mirror)
+void map_flag_matrix_clear(map_flag_matrix_t *flag_matrix, int x, int y, bool apply_mirror)
 {
-	MirrorPoints mirror_points;
-	
-	if (apply_mirror) {
-		get_mirror_points(&mirror_points, x, y, 1);
-	} else {
-		mirror_points.points[0] = (Coords){x, y};
-		mirror_points.count = 1;
-	}
-	
-	for (u32 i = 0; i < mirror_points.count; i++) {
-		
-		u32 bit_index = mirror_points.points[i].x * MAP_SIZE + mirror_points.points[i].y;
-		u32 word_index = bit_index / 32;
-		u32 bit_mask = ~(1U << (bit_index % 32));
-		
+	MirrorPoints mirror_points = apply_mirror ? mirror_points_init(x, y, 1) : mirror_points_init_none(x, y, 1);
+
+	for (int i = 0; i < mirror_points.count; ++i) {
+		int bit_index = mirror_points.points[i].x * MAP_SIZE + mirror_points.points[i].y;
+		int word_index = bit_index / (sizeof(map_flag_matrix_t) * CHAR_BIT);
+		map_flag_matrix_t bit_mask = ~(1U << (bit_index % (sizeof(map_flag_matrix_t) * CHAR_BIT)));
 		flag_matrix[word_index] &= bit_mask;
 	}
 }
-bool test_flag(u32 *flag_matrix, u32 x, u32 y)
+bool map_flag_matrix_test(const map_flag_matrix_t *flag_matrix, int x, int y)
 {
-	u32 bit_index = x * MAP_SIZE + y;
-	u32 word_index = bit_index / 32;
-	u32 bit_mask = 1U << (bit_index % 32);
-	
+	int bit_index = x * MAP_SIZE + y;
+	int word_index = bit_index / (sizeof(map_flag_matrix_t) * CHAR_BIT);
+	map_flag_matrix_t bit_mask = 1U << (bit_index % (sizeof(map_flag_matrix_t) * CHAR_BIT));
 	return (flag_matrix[word_index] & bit_mask) != 0;
 }
-void set_all_flags(u32 *flag_matrix)
+void map_flag_matrix_set_all(map_flag_matrix_t *flag_matrix)
 {
-	memset(flag_matrix, -1, FLAG_MATRIX_WORD_COUNT * sizeof(u32));
+	memset(flag_matrix, -1, MAP_FLAG_MATRIX_WORD_COUNT * sizeof(map_flag_matrix_t));
 }
-void clear_all_flags(u32 *flag_matrix)
+void map_flag_matrix_clear_all(map_flag_matrix_t *flag_matrix)
 {
-	memset(flag_matrix, 0, FLAG_MATRIX_WORD_COUNT * sizeof(u32));
+	memset(flag_matrix, 0, MAP_FLAG_MATRIX_WORD_COUNT * sizeof(map_flag_matrix_t));
 }
 
-void set_feature(Map *map, u32 x, u32 y, Feature new_feature)
+void map_set_feature(Map *map, int x, int y, Feature feature)
 {
-	MirrorPoints mirror_points;
-	get_mirror_points(&mirror_points, x, y, 1);
-	
-	for (u32 i = 0; i < mirror_points.count; i++) {
-		map->tile_matrix[mirror_points.points[i].x][mirror_points.points[i].y].feature = new_feature;
-	}
+	MirrorPoints mirror_points = mirror_points_init(x, y, 1);
+	for (int i = 0; i < mirror_points.count; ++i)
+		map->tile_matrix[mirror_points.points[i].x][mirror_points.points[i].y].feature = feature;
 }
-void set_height(Map *map, u32 x, u32 y, u8 new_height)
+void map_set_height(Map *map, int x, int y, u8 height)
 {
-	MirrorPoints mirror_points;
-	get_mirror_points(&mirror_points, x, y, 1);
-	
-	for (u32 i = 0; i < mirror_points.count; i++) {
-		map->tile_matrix[mirror_points.points[i].x][mirror_points.points[i].y].height = new_height;
-	}
+	MirrorPoints mirror_points = mirror_points_init(x, y, 1);
+	for (int i = 0; i < mirror_points.count; ++i)
+		map->tile_matrix[mirror_points.points[i].x][mirror_points.points[i].y].height = height;
 }
-void set_surface(Map *map, u32 x, u32 y, Surface new_surface)
+void map_set_surface(Map *map, int x, int y, Surface surface)
 {
-	MirrorPoints mirror_points;
-	get_mirror_points(&mirror_points, x, y, 1);
-	
-	for (u32 i = 0; i < mirror_points.count; i++) {
-		map->tile_matrix[mirror_points.points[i].x][mirror_points.points[i].y].surface = new_surface;
-	}
+	MirrorPoints mirror_points = mirror_points_init(x, y, 1);
+	for (int i = 0; i < mirror_points.count; ++i)
+		map->tile_matrix[mirror_points.points[i].x][mirror_points.points[i].y].surface = surface;
 }
 
 static const u8 building_sizes[] = {
@@ -343,207 +298,175 @@ static const u8 building_sizes[] = {
 	[BUILDING_FIRE_BALLISTA_TENT_SECOND] = 3,
 };
 
-bool place_building(Map *map, u32 x, u32 y, BuildingType type, u8 owner, BuildingOrientation orientation, bool mirror_owner)
+bool map_place_building(Map *map, int x, int y, BuildingType type, BuildingOrientation orientation, int owner, bool mirror_owner)
 {
-	MirrorPoints mirror_points;
-	u8 building_size = building_sizes[type];
-	get_mirror_points(&mirror_points, x, y, building_size);
-	
-	for (u32 i = 0; i < mirror_points.count; i++) {
-		
-		u8 current_owner = mirror_owner ? owner + i : owner;
-		
+	int size = building_sizes[type];
+	MirrorPoints mirror_points = mirror_points_init(x, y, size);
+
+	for (int i = 0; i < mirror_points.count; ++i) {
+		Coords origin = mirror_points.points[i];
+		int copy_owner = mirror_owner ? owner + i : owner;
+
 		if (map->building_array.usage == map->building_array.capacity) {
-			u32 new_capacity = map->building_array.capacity * 2;
-			BuildingObject *new_data = realloc(map->building_array.data, new_capacity * sizeof(BuildingObject));
-			if (!new_data) return false;
+			usize new_capacity = map->building_array.capacity * 2;
+			BuildingObject *new_data = realloc(map->building_array.data, new_capacity * sizeof(*map->building_array.data));
+			if (!new_data)
+				return false;
 			map->building_array.data = new_data;
 			map->building_array.capacity = new_capacity;
 		}
-		map->building_array.data[map->building_array.usage++] = (BuildingObject){mirror_points.points[i], type, current_owner, orientation};
-		
-		u32 x_origin = mirror_points.points[i].x;
-		u32 y_origin = mirror_points.points[i].y;
-		
-		for (u32 x_current = x_origin; x_current < x_origin + building_size; x_current++) {
-			for (u32 y_current = y_origin; y_current < y_origin + building_size; y_current++) {
-				map->tile_matrix[x_current][y_current].object_flags |= OF_BUILDING;
-			}
-		}
-		
+		map->building_array.data[map->building_array.usage++] = (BuildingObject){origin, type, copy_owner, orientation};
+
+		for (int j = origin.x; j < origin.x + size; ++j)
+			for (int k = origin.y; k < origin.y + size; ++k)
+				map->tile_matrix[j][k].object_flags |= OF_BUILDING;
 	}
-	
+
 	return true;
 }
-bool place_pitch_ditch(Map *map, u32 x, u32 y, u8 owner, bool mirror_owner)
+bool map_place_pitch_ditch(Map *map, int x, int y, int owner, bool mirror_owner)
 {
-	MirrorPoints mirror_points;
-	get_mirror_points(&mirror_points, x, y, 1);
-	
-	for (u32 i = 0; i < mirror_points.count; i++) {
-		
-		u8 current_owner = mirror_owner ? owner + i : owner;
-		
+	MirrorPoints mirror_points = mirror_points_init(x, y, 1);
+
+	for (int i = 0; i < mirror_points.count; ++i) {
+		Coords coords = mirror_points.points[i];
+		int copy_owner = mirror_owner ? owner + i : owner;
+
 		if (map->pitch_ditch_array.usage == map->pitch_ditch_array.capacity) {
-			u32 new_capacity = map->pitch_ditch_array.capacity * 2;
-			PitchDitchObject *new_data = realloc(map->pitch_ditch_array.data, new_capacity * sizeof(PitchDitchObject));
-			if (!new_data) return false;
+			usize new_capacity = map->pitch_ditch_array.capacity * 2;
+			PitchDitchObject *new_data = realloc(map->pitch_ditch_array.data, new_capacity * sizeof(*map->pitch_ditch_array.data));
+			if (!new_data)
+				return false;
 			map->pitch_ditch_array.data = new_data;
 			map->pitch_ditch_array.capacity = new_capacity;
 		}
-		map->pitch_ditch_array.data[map->pitch_ditch_array.usage++] = (PitchDitchObject){mirror_points.points[i], current_owner};
-		
-		map->tile_matrix[mirror_points.points[i].x][mirror_points.points[i].y].object_flags |= OF_PITCH_DITCH;
-		
+		map->pitch_ditch_array.data[map->pitch_ditch_array.usage++] = (PitchDitchObject){coords, copy_owner};
+
+		map->tile_matrix[coords.x][coords.y].object_flags |= OF_PITCH_DITCH;
 	}
-	
+
 	return true;
 }
-bool place_wall(Map *map, u32 x_start, u32 y_start, u32 x_end, u32 y_end, WallType type, u8 owner, bool mirror_owner)
+bool map_place_wall(Map *map, int x_start, int y_start, int x_end, int y_end, WallType type, int owner, bool mirror_owner)
 {
-	MirrorPoints mirror_points_start;
-	MirrorPoints mirror_points_end;
-	get_mirror_points(&mirror_points_start, x_start, y_start, 1);
-	get_mirror_points(&mirror_points_end, x_end, y_end, 1);
-	
-	for (u32 i = 0; i < mirror_points_start.count; i++) {
-		
-		u32 x_base_start = mirror_points_start.points[i].x;
-		u32 y_base_start = mirror_points_start.points[i].y;
-		u32 x_base_end = mirror_points_end.points[i].x;
-		u32 y_base_end = mirror_points_end.points[i].y;
-		
-		u8 current_owner = mirror_owner ? owner + i : owner;
-		
+	MirrorPoints mirror_points_start = mirror_points_init(x_start, y_start, 1);
+	MirrorPoints mirror_points_end = mirror_points_init(x_end, y_end, 1);
+
+	for (int i = 0; i < mirror_points_start.count; ++i) {
+		Coords start = mirror_points_start.points[i];
+		Coords end = mirror_points_end.points[i];
+		int copy_owner = mirror_owner ? owner + i : owner;
+
 		if (map->wall_array.usage == map->wall_array.capacity) {
-			u32 new_capacity = map->wall_array.capacity * 2;
-			WallObject *new_data = realloc(map->wall_array.data, new_capacity * sizeof(WallObject));
-			if (!new_data) return false;
+			usize new_capacity = map->wall_array.capacity * 2;
+			WallObject *new_data = realloc(map->wall_array.data, new_capacity * sizeof(*map->wall_array.data));
+			if (!new_data)
+				return false;
 			map->wall_array.data = new_data;
 			map->wall_array.capacity = new_capacity;
 		}
-		map->wall_array.data[map->wall_array.usage++] = (WallObject){(Coords){x_base_start, y_base_start}, (Coords){x_base_end, y_base_end}, type, current_owner};
-		
-		u32 x_current = x_base_start;
-		u32 y_current = y_base_start;
-		map->tile_matrix[x_base_start][y_base_start].object_flags |= OF_WALL;
-		u32 extra_wall_length = abs((i32)x_base_start - (i32)x_base_end) + abs((i32)y_base_start - (i32)y_base_end);
-		
-		for (u32 j = 0; j < extra_wall_length; j++) {
-			
-			if (x_current < x_base_end) {
-				x_current++;
-			} else if (x_current > x_base_end) {
-				x_current--;
-			}
-			if (y_current < y_base_end) {
-				y_current++;
-			} else if (y_current > y_base_end) {
-				y_current--;
-			}
-			
-			map->tile_matrix[x_current][y_current].object_flags |= OF_WALL;
-			
+		map->wall_array.data[map->wall_array.usage++] = (WallObject){start, end, type, copy_owner};
+
+		map->tile_matrix[start.x][start.y].object_flags |= OF_WALL;
+
+		Coords walker_pos = start;
+		while (walker_pos.x != end.x || walker_pos.y != end.y) {
+			walker_pos.x += (walker_pos.x < end.x) - (walker_pos.x > end.x);
+			walker_pos.y += (walker_pos.y < end.y) - (walker_pos.y > end.y);
+			map->tile_matrix[walker_pos.x][walker_pos.y].object_flags |= OF_WALL;
 		}
-		
 	}
-	
+
 	return true;
 }
-bool place_rock(Map *map, u32 x, u32 y, u8 size)
+bool map_place_rock(Map *map, int x, int y, int size)
 {
-	MirrorPoints mirror_points;
-	get_mirror_points(&mirror_points, x, y, size);
-	
-	for (u32 i = 0; i < mirror_points.count; i++) {
-		
+	MirrorPoints mirror_points = mirror_points_init(x, y, size);
+
+	for (int i = 0; i < mirror_points.count; ++i) {
+		Coords origin = mirror_points.points[i];
+
 		if (map->rock_array.usage == map->rock_array.capacity) {
-			u32 new_capacity = map->rock_array.capacity * 2;
-			RockObject *new_data = realloc(map->rock_array.data, new_capacity * sizeof(RockObject));
-			if (!new_data) return false;
+			usize new_capacity = map->rock_array.capacity * 2;
+			RockObject *new_data = realloc(map->rock_array.data, new_capacity * sizeof(*map->rock_array.data));
+			if (!new_data)
+				return false;
 			map->rock_array.data = new_data;
 			map->rock_array.capacity = new_capacity;
 		}
-		map->rock_array.data[map->rock_array.usage++] = (RockObject){mirror_points.points[i], size};
-		
-		u32 x_origin = mirror_points.points[i].x;
-		u32 y_origin = mirror_points.points[i].y;
-		
-		for (u32 x_current = x_origin; x_current < x_origin + size; x_current++) {
-			for (u32 y_current = y_origin; y_current < y_origin + size; y_current++) {
-				map->tile_matrix[x_current][y_current].object_flags |= OF_ROCK;
-			}
-		}
-		
+		map->rock_array.data[map->rock_array.usage++] = (RockObject){origin, size};
+
+		for (int j = origin.x; j < origin.x + size; ++j)
+			for (int k = origin.y; k < origin.y + size; ++k)
+				map->tile_matrix[j][k].object_flags |= OF_ROCK;
 	}
-	
+
 	return true;
 }
-bool place_plant(Map *map, u32 x, u32 y, PlantType type, u8 variant, u8 stage)
+bool map_place_plant(Map *map, int x, int y, PlantType type, int variant, int stage)
 {
-	MirrorPoints mirror_points;
-	get_mirror_points(&mirror_points, x, y, 1);
-	
-	for (u32 i = 0; i < mirror_points.count; i++) {
-		
+	MirrorPoints mirror_points = mirror_points_init(x, y, 1);
+
+	for (int i = 0; i < mirror_points.count; ++i) {
+		Coords coords = mirror_points.points[i];
+
 		if (map->plant_array.usage == map->plant_array.capacity) {
-			u32 new_capacity = map->plant_array.capacity * 2;
-			PlantObject *new_data = realloc(map->plant_array.data, new_capacity * sizeof(PlantObject));
-			if (!new_data) return false;
+			usize new_capacity = map->plant_array.capacity * 2;
+			PlantObject *new_data = realloc(map->plant_array.data, new_capacity * sizeof(*map->plant_array.data));
+			if (!new_data)
+				return false;
 			map->plant_array.data = new_data;
 			map->plant_array.capacity = new_capacity;
 		}
-		map->plant_array.data[map->plant_array.usage++] = (PlantObject){mirror_points.points[i], type, variant, stage};
-		
-		map->tile_matrix[mirror_points.points[i].x][mirror_points.points[i].y].object_flags |= OF_PLANT;
-		
+		map->plant_array.data[map->plant_array.usage++] = (PlantObject){coords, type, variant, stage};
+
+		map->tile_matrix[coords.x][coords.y].object_flags |= OF_PLANT;
 	}
-	
+
 	return true;
 }
-bool place_unit(Map *map, u32 x, u32 y, UnitType type, u8 owner, bool mirror_owner)
+bool map_place_unit(Map *map, int x, int y, UnitType type, int owner, bool mirror_owner)
 {
-	MirrorPoints mirror_points;
-	get_mirror_points(&mirror_points, x, y, 1);
-	
-	for (u32 i = 0; i < mirror_points.count; i++) {
-		
-		u8 current_owner = mirror_owner ? owner + i : owner;
-		
+	MirrorPoints mirror_points = mirror_points_init(x, y, 1);
+
+	for (int i = 0; i < mirror_points.count; ++i) {
+		Coords coords = mirror_points.points[i];
+		int copy_owner = mirror_owner ? owner + i : owner;
+
 		if (map->unit_array.usage == map->unit_array.capacity) {
-			u32 new_capacity = map->unit_array.capacity * 2;
-			UnitObject *new_data = realloc(map->unit_array.data, new_capacity * sizeof(UnitObject));
-			if (!new_data) return false;
+			usize new_capacity = map->unit_array.capacity * 2;
+			UnitObject *new_data = realloc(map->unit_array.data, new_capacity * sizeof(*map->unit_array.data));
+			if (!new_data)
+				return false;
 			map->unit_array.data = new_data;
 			map->unit_array.capacity = new_capacity;
 		}
-		map->unit_array.data[map->unit_array.usage++] = (UnitObject){mirror_points.points[i], type, current_owner};
-		
-		map->tile_matrix[mirror_points.points[i].x][mirror_points.points[i].y].object_flags |= OF_UNIT;
-		
+		map->unit_array.data[map->unit_array.usage++] = (UnitObject){coords, type, copy_owner};
+
+		map->tile_matrix[coords.x][coords.y].object_flags |= OF_UNIT;
 	}
-	
+
 	return true;
 }
-bool place_animal(Map *map, u32 x, u32 y, AnimalType type, u8 count)
+bool map_place_animal_group(Map *map, int x, int y, AnimalGroupType type, int count)
 {
-	MirrorPoints mirror_points;
-	get_mirror_points(&mirror_points, x, y, 1);
-	
-	for (u32 i = 0; i < mirror_points.count; i++) {
-		
-		if (map->animal_array.usage == map->animal_array.capacity) {
-			u32 new_capacity = map->animal_array.capacity * 2;
-			AnimalObject *new_data = realloc(map->animal_array.data, new_capacity * sizeof(AnimalObject));
-			if (!new_data) return false;
-			map->animal_array.data = new_data;
-			map->animal_array.capacity = new_capacity;
+	MirrorPoints mirror_points = mirror_points_init(x, y, 1);
+
+	for (int i = 0; i < mirror_points.count; ++i) {
+		Coords coords = mirror_points.points[i];
+
+		if (map->animal_group_array.usage == map->animal_group_array.capacity) {
+			usize new_capacity = map->animal_group_array.capacity * 2;
+			AnimalGroupObject *new_data = realloc(map->animal_group_array.data, new_capacity * sizeof(*map->animal_group_array.data));
+			if (!new_data)
+				return false;
+			map->animal_group_array.data = new_data;
+			map->animal_group_array.capacity = new_capacity;
 		}
-		map->animal_array.data[map->animal_array.usage++] = (AnimalObject){mirror_points.points[i], type, count};
-		
-		map->tile_matrix[mirror_points.points[i].x][mirror_points.points[i].y].object_flags |= OF_ANIMAL;
-		
+		map->animal_group_array.data[map->animal_group_array.usage++] = (AnimalGroupObject){coords, type, count};
+
+		map->tile_matrix[coords.x][coords.y].object_flags |= OF_ANIMAL_GROUP;
 	}
-	
+
 	return true;
 }

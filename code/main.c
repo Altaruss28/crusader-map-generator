@@ -1,187 +1,178 @@
-#include "utils.h"
-#include "mirror.h"
-#include "config.h"
-#include "process_access.h"
-#include "injection.h"
-#include "threads.h"
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
+
 #include <windows.h>
+
+#include "common.h"
+#include "config.h"
+#include "injection.h"
+#include "mirror.h"
+#include "process_access.h"
+#include "thread_related.h"
+#include "version.h"
 
 int main(void)
 {
-	u32 cpu_core_count = 0;
-	
-	init_translation_matrix();
-	
+	int cpu_core_count = 0;
+
+	coord_conversion_matrix_init();
+
 	printf(
-		"%s\n"
+		VERSION_STR "\n"
 		"\n"
 		"Enter \"r\" to run the generator\n"
 		"Enter \"q\" to quit the program\n"
-		"\n",
-		VERSION
+		"\n"
 	);
-	
+
 	while (true) {
-		
 		printf(">");
-		
-		char input_str[256];
-		
-		if (fgets(input_str, sizeof(input_str), stdin) != NULL) {
-			
-			u32 char_offset = 0;
-			while (input_str[char_offset] != '\0') char_offset++;
-			
-			if (char_offset > 0 && input_str[char_offset - 1] == '\n') {
-				input_str[char_offset - 1] = '\0';
-			}
-			
-		}
-		
-		if (strcmp(input_str, "q") == 0) break;
-		
-		if (strcmp(input_str, "r") != 0) {
+
+		char input_str[256] = {};
+		fgets(input_str, sizeof(input_str), stdin);
+
+		int input_char_offset = 0;
+		while (input_str[input_char_offset] != '\0')
+			++input_char_offset;
+		if (input_char_offset > 0 && input_str[input_char_offset - 1] == '\n')
+			input_str[input_char_offset - 1] = '\0';
+
+		if (strcmp(input_str, "q") == 0) {
+			break;
+		} else if (strcmp(input_str, "r") != 0) {
 			printf("Unknown command\n");
 			continue;
 		}
-		
+
 		bool run_completed = false;
-		
+
 		u32 start_time_win = GetTickCount();
-		time_t start_time_unix = time(NULL);
-		
-		Config *config = NULL;
-		
-		HANDLE *thread_handles = NULL;
-		
-		CRITICAL_SECTION run_counter_access;
-		CRITICAL_SECTION injection_access;
-		CRITICAL_SECTION stdout_access;
-		BOOL cs_rca_ret = FALSE;
-		BOOL cs_ia_ret = FALSE;
-		BOOL cs_sa_ret = FALSE;
-		
-		if (!(config = init_config())) {
-			printf("Error: init_config failed\n");
-			goto cleanup;
+		time_t start_time_unix = time(nullptr);
+
+		Config *config = nullptr;
+
+		CRITICAL_SECTION map_attempt_counter_cs;
+		CRITICAL_SECTION injection_cs;
+		CRITICAL_SECTION stdout_cs;
+		bool map_attempt_counter_cs_is_init = false;
+		bool injection_cs_is_init = false;
+		bool stdout_cs_is_init = false;
+
+		HANDLE *thread_handles = nullptr;
+
+		if (!(config = config_init())) {
+			printf("Error: config_init failed\n");
+			goto err;
 		}
-		
-		if (!enable_process_access()) {
-			printf("Error: enable_process_access failed - make sure the game is running\n");
-			goto cleanup;
+		mirror_init(config->mirror_mode);
+
+		if (!process_access_enable()) {
+			printf("Error: process_access_enable failed - make sure the game is running\n");
+			goto err;
 		}
-		
-		if (!init_addresses()) {
-			printf("Error: init_addresses failed - use a compatible game version\n");
-			goto cleanup;
+
+		if (!addresses_init()) {
+			printf("Error: addresses_init failed - use a compatible game version\n");
+			goto err;
 		}
-		
-		if (!enable_code_edits()) {
-			printf("Error: enable_code_edits failed - restart the game before further use\n");
-			goto cleanup;
+		if (!code_edits_enable()) {
+			printf("Error: code_edits_enable failed - restart the game before further use\n");
+			goto err;
 		}
-		
-		if (!cpu_core_count && !get_cpu_core_count(&cpu_core_count)) {
-			printf("Error: get_cpu_core_count failed\n");
-			goto cleanup;
+
+		if (!cpu_core_count && !(cpu_core_count = cpu_core_count_get())) {
+			printf("Error: cpu_core_count_get failed\n");
+			goto err;
 		}
-		
-		cs_rca_ret = InitializeCriticalSectionEx(&run_counter_access, 0, CRITICAL_SECTION_NO_DEBUG_INFO);
-		cs_ia_ret = InitializeCriticalSectionEx(&injection_access, 0, CRITICAL_SECTION_NO_DEBUG_INFO);
-		cs_sa_ret = InitializeCriticalSectionEx(&stdout_access, 0, CRITICAL_SECTION_NO_DEBUG_INFO);
-		if (!cs_rca_ret || !cs_ia_ret || !cs_sa_ret) {
+
+		map_attempt_counter_cs_is_init = InitializeCriticalSectionEx(&map_attempt_counter_cs, 0, CRITICAL_SECTION_NO_DEBUG_INFO);
+		injection_cs_is_init = InitializeCriticalSectionEx(&injection_cs, 0, CRITICAL_SECTION_NO_DEBUG_INFO);
+		stdout_cs_is_init = InitializeCriticalSectionEx(&stdout_cs, 0, CRITICAL_SECTION_NO_DEBUG_INFO);
+		if (!map_attempt_counter_cs_is_init || !injection_cs_is_init || !stdout_cs_is_init) {
 			printf("Error: InitializeCriticalSectionEx failed\n");
-			goto cleanup;
+			goto err;
 		}
-		
-		init_mirror(config);
-		
-		u32 run_counter = 0;
-		
-		GeneratorThreadArguments generator_thread_arguments = {
+
+		int map_count = config->map_count;
+		int thread_count = map_count < cpu_core_count ? map_count : cpu_core_count;
+
+		if (!(thread_handles = malloc(sizeof(HANDLE) * thread_count))) {
+			printf("Error: malloc failed\n");
+			goto err;
+		}
+
+		printf("Generator started\n");
+
+		int map_attempt_counter = 0;
+		GeneratorThreadArguments thread_args = {
 			.config = config,
-			.run_counter = &run_counter,
+			.map_attempt_counter = &map_attempt_counter,
+			.map_attempt_counter_cs = &map_attempt_counter_cs,
 			.start_time_win = start_time_win,
 			.start_time_unix = start_time_unix,
-			.run_counter_access = &run_counter_access,
-			.injection_access = &injection_access,
-			.stdout_access = &stdout_access,
+			.injection_cs = &injection_cs,
+			.stdout_cs = &stdout_cs,
 		};
-		
-		u32 map_count = config->map_count;
-		u32 thread_count = map_count < cpu_core_count ? map_count : cpu_core_count;
-		
-		if (!(thread_handles = (HANDLE *)malloc(sizeof(HANDLE) * thread_count))) {
-			printf("Error: malloc failed\n");
-			goto cleanup;
-		}
-		
-		u32 threads_run = 0;
+
+		for (int i = 0; i < thread_count; ++i)
+			if (!(thread_handles[i] = CreateThread(nullptr, 0, generator_thread, (LPVOID)&thread_args, 0, nullptr)))
+				thread_handles[i] = INVALID_HANDLE_VALUE;
+
+		for (int i = 0; i < thread_count; ++i)
+			if (thread_handles[i] != INVALID_HANDLE_VALUE)
+				WaitForSingleObject(thread_handles[i], INFINITE);
+
+		int threads_run = 0;
 		bool thread_error = false;
-		
-		printf("Generator started\n");
-		
-		for (u32 i = 0; i < thread_count; i++) {
-			thread_handles[i] = CreateThread(NULL, 0, generator_thread, (LPVOID)&generator_thread_arguments, 0, NULL);
-			if (thread_handles[i]) continue;
-			thread_handles[i] = INVALID_HANDLE_VALUE;
-		}
-		
-		for (u32 i = 0; i < thread_count; i++) {
-			if (thread_handles[i] == INVALID_HANDLE_VALUE) continue;
-			WaitForSingleObject(thread_handles[i], INFINITE);
-		}
-		
-		for (u32 i = 0; i < thread_count; i++) {
-			if (thread_handles[i] == INVALID_HANDLE_VALUE) continue;
-			
-			threads_run++;
-			
+
+		for (int i = 0; i < thread_count; ++i) {
+			if (thread_handles[i] == INVALID_HANDLE_VALUE)
+				continue;
+			++threads_run;
+
 			DWORD exit_code;
 			GetExitCodeThread(thread_handles[i], &exit_code);
-			if (!exit_code) {
+			if (!exit_code)
 				thread_error = true;
-			}
-			
+
 			CloseHandle(thread_handles[i]);
 		}
-		
-		if (threads_run < thread_count) {
-			printf("Error: could not run target number of threads\n");
-		}
-		
-		if (thread_error) {
-			printf("Error: thread returned failure - verify and discard any corrupted output\n");
-		}
-		
+
+		if (threads_run == 0)
+			printf("Error: could not run any generator threads\n");
+		else if (threads_run < thread_count)
+			printf("Warning: could not run target number of generator threads\n");
+
+		if (thread_error)
+			printf("Error: generator thread returned failure - verify and discard any corrupted output\n");
+
 		run_completed = true;
-		
-cleanup:
-		
+
+err:
 		free(thread_handles);
-		
-		if (cs_sa_ret) DeleteCriticalSection(&stdout_access);
-		if (cs_ia_ret) DeleteCriticalSection(&injection_access);
-		if (cs_rca_ret) DeleteCriticalSection(&run_counter_access);
-		
-		if (!disable_code_edits()) {
-			printf("Error: disable_code_edits failed - restart the game before further use\n");
-		}
-		
-		disable_process_access();
-		
-		free_config(config);
-		
-		if (!run_completed) continue;
-		
+
+		if (stdout_cs_is_init)
+			DeleteCriticalSection(&stdout_cs);
+		if (injection_cs_is_init)
+			DeleteCriticalSection(&injection_cs);
+		if (map_attempt_counter_cs_is_init)
+			DeleteCriticalSection(&map_attempt_counter_cs);
+
+		if (!code_edits_disable())
+			printf("Error: code_edits_disable failed - restart the game before further use\n");
+
+		process_access_disable();
+
+		config_free(config);
+
+		if (!run_completed)
+			continue;
+
 		u32 run_time_win = GetTickCount() - start_time_win;
-		
-		printf("Generator finished, time elapsed: %d%s\n", run_time_win < 1000 ? run_time_win : run_time_win / 1000, run_time_win < 1000 ? "ms" : "s");
-		
+		bool is_below_second = run_time_win < 1000;
+		printf("Generator finished, time elapsed: %d%s\n", is_below_second ? run_time_win : run_time_win / 1000, is_below_second ? "ms" : "s");
 	}
-	
+
 	return 0;
 }

@@ -1,27 +1,16 @@
 #pragma once
-#include "utils.h"
 
-enum {
-	MAP_SIZE = 400,
-};
+#include <limits.h>
 
-enum {
-	OF_BUILDING    = (1 << 0),
-	OF_PITCH_DITCH = (1 << 1),
-	OF_WALL        = (1 << 2),
-	OF_ROCK        = (1 << 3),
-	OF_PLANT       = (1 << 4),
-	OF_UNIT        = (1 << 5),
-	OF_ANIMAL      = (1 << 6),
-};
+#include "common.h"
 
-typedef enum Section {
+typedef enum {
 	SECTION_PADDING,
 	SECTION_BORDER,
 	SECTION_SACRIFICED,
 	SECTION_VALID,
 } Section;
-typedef enum Feature {
+typedef enum {
 	FEATURE_NONE,
 	FEATURE_CLIFF,
 	FEATURE_RAMP,
@@ -36,7 +25,7 @@ typedef enum Feature {
 	FEATURE_ANIMAL,
 	FEATURE_SHRUB,
 } Feature;
-typedef enum Surface {
+typedef enum {
 	SURFACE_EARTH,
 	SURFACE_PLATEAU_MEDIUM,
 	SURFACE_PLATEAU_HIGH,
@@ -56,16 +45,25 @@ typedef enum Surface {
 	SURFACE_FORD,
 	SURFACE_SEA,
 } Surface;
-typedef struct Tile {
+typedef enum {
+	OF_BUILDING     = (1 << 0),
+	OF_PITCH_DITCH  = (1 << 1),
+	OF_WALL         = (1 << 2),
+	OF_ROCK         = (1 << 3),
+	OF_PLANT        = (1 << 4),
+	OF_UNIT         = (1 << 5),
+	OF_ANIMAL_GROUP = (1 << 6),
+} ObjectFlag;
+typedef struct {
 	Section section;
 	u16 distance_from_center;
 	Feature feature;
 	u8 height;
 	Surface surface;
-	u8 object_flags;
+	ObjectFlag object_flags;
 } Tile;
 
-typedef enum BuildingType {
+typedef enum {
 	BUILDING_FLETCHER,
 	BUILDING_WOODCUTTER,
 	BUILDING_STOCKPILE,
@@ -197,113 +195,7 @@ typedef enum BuildingType {
 	BUILDING_FIRE_BALLISTA_TENT,
 	BUILDING_FIRE_BALLISTA_TENT_SECOND,
 } BuildingType;
-typedef enum WallType {
-	WALL_HIGH,
-	WALL_LOW,
-	WALL_CRENEL,
-	WALL_STAIR,
-} WallType;
-typedef enum PlantType {
-    PLANT_TREE_DATE,
-    PLANT_TREE_COCONUT,
-    PLANT_TREE_OLIVE,
-    PLANT_TREE_CHERRY,
-	PLANT_TREE_APPLE,
-    PLANT_SHRUB_OLD,
-    PLANT_SHRUB_THICK,
-    PLANT_SHRUB_AGAVE,
-    PLANT_CACTUS_NORMAL,
-    PLANT_CACTUS_BLOBBY,
-    PLANT_CACTUS_WIGGLY,
-} PlantType;
-typedef enum UnitType {
-    UNIT_PLACEHOLDER,
-    UNIT_PEASANT,
-    UNIT_BURNING_MAN,
-    UNIT_WOODCUTTER,
-    UNIT_FLETCHER,
-    UNIT_TUNNELER,
-    UNIT_HUNTER,
-    UNIT_QUARRY_MASON,
-    UNIT_QUARRY_GRUNT,
-    UNIT_QUARRY_OX,
-    UNIT_PITCH_WORKER,
-    UNIT_WHEAT_FARMER,
-    UNIT_HOP_FARMER,
-    UNIT_APPLE_FARMER,
-    UNIT_DAIRY_FARMER,
-    UNIT_MILLER,
-    UNIT_BAKER,
-    UNIT_BREWER,
-    UNIT_POLETURNER,
-    UNIT_BLACKSMITH,
-    UNIT_ARMORER,
-    UNIT_TANNER,
-    UNIT_EUROPEAN_ARCHER,
-    UNIT_CROSSBOWMAN,
-    UNIT_SPEARMAN,
-    UNIT_PIKEMAN,
-    UNIT_MACEMAN,
-    UNIT_EUROPEAN_SWORDSMAN,
-    UNIT_KNIGHT,
-    UNIT_LADERMAN,
-    UNIT_ENGINEER,
-    UNIT_IRON_MINER_ONE,
-    UNIT_IRON_MINER_TWO,
-    UNIT_PRIEST,
-    UNIT_HEALER,
-    UNIT_DRUNKARD,
-    UNIT_INNKEEPER,
-    UNIT_MONK,
-    UNIT_UNKNOWN_ONE,
-    UNIT_CATAPULT,
-    UNIT_TREBUCHET,
-    UNIT_MANGONEL,
-    UNIT_TRADER,
-    UNIT_TRADER_HORSE,
-    UNIT_DEER,
-    UNIT_LION,
-    UNIT_RABBIT,
-    UNIT_CAMEL,
-    UNIT_CROW,
-    UNIT_SEAGULL,
-    UNIT_SIEGE_TENT,
-    UNIT_COW,
-    UNIT_HUNTER_DOG,
-    UNIT_FIREMAN,
-    UNIT_GHOST,
-    UNIT_LORD,
-    UNIT_LADY,
-    UNIT_JESTER,
-    UNIT_SIEGE_TOWER,
-    UNIT_BATTERING_RAM,
-    UNIT_SHIELD,
-    UNIT_TOWER_BALLISTA,
-    UNIT_CHICKEN,
-    UNIT_MOTHER,
-    UNIT_CHILD,
-    UNIT_JUGGLER,
-    UNIT_FIRE_EATER,
-    UNIT_WAR_DOG,
-    UNIT_BURNING_ANIMAL_LARGE,
-    UNIT_BURNING_ANIMAL_SMALL,
-    UNIT_ARABIAN_ARCHER,
-    UNIT_SLAVE,
-    UNIT_SLINGER,
-    UNIT_ASSASSIN,
-    UNIT_HORSE_ARCHER,
-    UNIT_ARABIAN_SWORDSMAN,
-    UNIT_FIRETHROWER,
-    UNIT_FIRE_BALLISTA,
-} UnitType;
-typedef enum AnimalType {
-	ANIMAL_DEER,
-	ANIMAL_LION,
-	ANIMAL_RABBIT,
-	ANIMAL_CAMEL,
-} AnimalType;
-
-typedef enum BuildingOrientation {
+typedef enum {
 	BUILDING_ORIENTATION_UP,
 	BUILDING_ORIENTATION_RIGHT,
 	BUILDING_ORIENTATION_DOWN,
@@ -311,115 +203,212 @@ typedef enum BuildingOrientation {
 	BUILDING_ORIENTATION_HORIZONTAL,
 	BUILDING_ORIENTATION_VERTICAL,
 } BuildingOrientation;
+typedef enum {
+	WALL_HIGH,
+	WALL_LOW,
+	WALL_CRENEL,
+	WALL_STAIR,
+} WallType;
+typedef enum {
+	PLANT_TREE_DATE,
+	PLANT_TREE_COCONUT,
+	PLANT_TREE_OLIVE,
+	PLANT_TREE_CHERRY,
+	PLANT_TREE_APPLE,
+	PLANT_SHRUB_OLD,
+	PLANT_SHRUB_THICK,
+	PLANT_SHRUB_AGAVE,
+	PLANT_CACTUS_NORMAL,
+	PLANT_CACTUS_BLOBBY,
+	PLANT_CACTUS_WIGGLY,
+} PlantType;
+typedef enum {
+	UNIT_PLACEHOLDER,
+	UNIT_PEASANT,
+	UNIT_BURNING_MAN,
+	UNIT_WOODCUTTER,
+	UNIT_FLETCHER,
+	UNIT_TUNNELER,
+	UNIT_HUNTER,
+	UNIT_QUARRY_MASON,
+	UNIT_QUARRY_GRUNT,
+	UNIT_QUARRY_OX,
+	UNIT_PITCH_WORKER,
+	UNIT_WHEAT_FARMER,
+	UNIT_HOP_FARMER,
+	UNIT_APPLE_FARMER,
+	UNIT_DAIRY_FARMER,
+	UNIT_MILLER,
+	UNIT_BAKER,
+	UNIT_BREWER,
+	UNIT_POLETURNER,
+	UNIT_BLACKSMITH,
+	UNIT_ARMORER,
+	UNIT_TANNER,
+	UNIT_EUROPEAN_ARCHER,
+	UNIT_CROSSBOWMAN,
+	UNIT_SPEARMAN,
+	UNIT_PIKEMAN,
+	UNIT_MACEMAN,
+	UNIT_EUROPEAN_SWORDSMAN,
+	UNIT_KNIGHT,
+	UNIT_LADERMAN,
+	UNIT_ENGINEER,
+	UNIT_IRON_MINER_ONE,
+	UNIT_IRON_MINER_TWO,
+	UNIT_PRIEST,
+	UNIT_HEALER,
+	UNIT_DRUNKARD,
+	UNIT_INNKEEPER,
+	UNIT_MONK,
+	UNIT_UNKNOWN_ONE,
+	UNIT_CATAPULT,
+	UNIT_TREBUCHET,
+	UNIT_MANGONEL,
+	UNIT_TRADER,
+	UNIT_TRADER_HORSE,
+	UNIT_DEER,
+	UNIT_LION,
+	UNIT_RABBIT,
+	UNIT_CAMEL,
+	UNIT_CROW,
+	UNIT_SEAGULL,
+	UNIT_SIEGE_TENT,
+	UNIT_COW,
+	UNIT_HUNTER_DOG,
+	UNIT_FIREMAN,
+	UNIT_GHOST,
+	UNIT_LORD,
+	UNIT_LADY,
+	UNIT_JESTER,
+	UNIT_SIEGE_TOWER,
+	UNIT_BATTERING_RAM,
+	UNIT_SHIELD,
+	UNIT_TOWER_BALLISTA,
+	UNIT_CHICKEN,
+	UNIT_MOTHER,
+	UNIT_CHILD,
+	UNIT_JUGGLER,
+	UNIT_FIRE_EATER,
+	UNIT_WAR_DOG,
+	UNIT_BURNING_ANIMAL_LARGE,
+	UNIT_BURNING_ANIMAL_SMALL,
+	UNIT_ARABIAN_ARCHER,
+	UNIT_SLAVE,
+	UNIT_SLINGER,
+	UNIT_ASSASSIN,
+	UNIT_HORSE_ARCHER,
+	UNIT_ARABIAN_SWORDSMAN,
+	UNIT_FIRETHROWER,
+	UNIT_FIRE_BALLISTA,
+} UnitType;
+typedef enum {
+	ANIMAL_GROUP_DEER,
+	ANIMAL_GROUP_LION,
+	ANIMAL_GROUP_RABBIT,
+	ANIMAL_GROUP_CAMEL,
+} AnimalGroupType;
 
-typedef struct BuildingObject {
+typedef struct {
 	Coords position;
 	BuildingType type;
 	u8 owner;
 	BuildingOrientation orientation;
 } BuildingObject;
-typedef struct PitchDitchObject {
+typedef struct {
 	Coords position;
 	u8 owner;
 } PitchDitchObject;
-typedef struct WallObject {
-	Coords start_coords;
-	Coords end_coords;
+typedef struct {
+	Coords start;
+	Coords end;
 	WallType type;
 	u8 owner;
 } WallObject;
-typedef struct RockObject {
+typedef struct {
 	Coords position;
 	u8 size;
 } RockObject;
-typedef struct PlantObject {
+typedef struct {
 	Coords position;
 	PlantType type;
 	u8 variant;
 	u8 stage;
 } PlantObject;
-typedef struct UnitObject {
+typedef struct {
 	Coords position;
 	UnitType type;
 	u8 owner;
 } UnitObject;
-typedef struct AnimalObject {
+typedef struct {
 	Coords position;
-	AnimalType type;
+	AnimalGroupType type;
 	u8 count;
-} AnimalObject;
+} AnimalGroupObject;
 
-typedef struct BuildingArray {
-	BuildingObject *data;
-	u32 usage;
-	u32 capacity;
-} BuildingArray;
-typedef struct PitchDitchArray {
-	PitchDitchObject *data;
-	u32 usage;
-	u32 capacity;
-} PitchDitchArray;
-typedef struct WallArray {
-	WallObject *data;
-	u32 usage;
-	u32 capacity;
-} WallArray;
-typedef struct RockArray {
-	RockObject *data;
-	u32 usage;
-	u32 capacity;
-} RockArray;
-typedef struct PlantArray {
-	PlantObject *data;
-	u32 usage;
-	u32 capacity;
-} PlantArray;
-typedef struct UnitArray {
-	UnitObject *data;
-	u32 usage;
-	u32 capacity;
-} UnitArray;
-typedef struct AnimalArray {
-	AnimalObject *data;
-	u32 usage;
-	u32 capacity;
-} AnimalArray;
-
-typedef struct Map {
-	Tile **tile_matrix;
-	BuildingArray building_array;
-	PitchDitchArray pitch_ditch_array;
-	WallArray wall_array;
-	RockArray rock_array;
-	PlantArray plant_array;
-	UnitArray unit_array;
-	AnimalArray animal_array;
+constexpr int MAP_SIZE = 400;
+typedef struct {
+	Tile tile_matrix[MAP_SIZE][MAP_SIZE];
+	struct {
+		BuildingObject *data;
+		usize usage;
+		usize capacity;
+	} building_array;
+	struct {
+		PitchDitchObject *data;
+		usize usage;
+		usize capacity;
+	} pitch_ditch_array;
+	struct {
+		WallObject *data;
+		usize usage;
+		usize capacity;
+	} wall_array;
+	struct {
+		RockObject *data;
+		usize usage;
+		usize capacity;
+	} rock_array;
+	struct {
+		PlantObject *data;
+		usize usage;
+		usize capacity;
+	} plant_array;
+	struct {
+		UnitObject *data;
+		usize usage;
+		usize capacity;
+	} unit_array;
+	struct {
+		AnimalGroupObject *data;
+		usize usage;
+		usize capacity;
+	} animal_group_array;
 } Map;
 
-Map *init_map(void);
-void free_map(Map *map);
+Map *map_init(void);
+void map_free(Map *map);
 
-bool is_in_bounds(i32 x, i32 y);
-bool is_in_bounds_rectangle(i32 x_origin, i32 y_origin, u32 rectangle_width, u32 rectangle_length);
-bool is_in_bounds_array(CoordsArray *claimed_tiles);
+bool map_check_bounds_point(int x, int y);
+bool map_check_bounds_rectangle(int x_origin, int y_origin, int rectangle_width, int rectangle_length);
+bool map_check_bounds_array(const CoordsArray *claimed_tiles);
 
-enum {
-	FLAG_MATRIX_WORD_COUNT = ((MAP_SIZE * MAP_SIZE) + 31) / 32,
-};
-void set_flag(u32 *flag_matrix, u32 x, u32 y, bool apply_mirror);
-void clear_flag(u32 *flag_matrix, u32 x, u32 y, bool apply_mirror);
-bool test_flag(u32 *flag_matrix, u32 x, u32 y);
-void set_all_flags(u32 *flag_matrix);
-void clear_all_flags(u32 *flag_matrix);
+typedef usize map_flag_matrix_t;
+constexpr int MAP_FLAG_MATRIX_WORD_COUNT = ((MAP_SIZE * MAP_SIZE) + ((sizeof(map_flag_matrix_t) * CHAR_BIT) - 1)) / (sizeof(map_flag_matrix_t) * CHAR_BIT);
+void map_flag_matrix_set(map_flag_matrix_t *flag_matrix, int x, int y, bool apply_mirror);
+void map_flag_matrix_clear(map_flag_matrix_t *flag_matrix, int x, int y, bool apply_mirror);
+bool map_flag_matrix_test(const map_flag_matrix_t *flag_matrix, int x, int y);
+void map_flag_matrix_set_all(map_flag_matrix_t *flag_matrix);
+void map_flag_matrix_clear_all(map_flag_matrix_t *flag_matrix);
 
-void set_feature(Map *map, u32 x, u32 y, Feature new_feature);
-void set_height(Map *map, u32 x, u32 y, u8 new_height);
-void set_surface(Map *map, u32 x, u32 y, Surface new_surface);
+void map_set_feature(Map *map, int x, int y, Feature feature);
+void map_set_height(Map *map, int x, int y, u8 height);
+void map_set_surface(Map *map, int x, int y, Surface surface);
 
-bool place_building(Map *map, u32 x, u32 y, BuildingType type, u8 owner, BuildingOrientation orientation, bool mirror_owner);
-bool place_pitch_ditch(Map *map, u32 x, u32 y, u8 owner, bool mirror_owner);
-bool place_wall(Map *map, u32 x_start, u32 y_start, u32 x_end, u32 y_end, WallType type, u8 owner, bool mirror_owner);
-bool place_rock(Map *map, u32 x, u32 y, u8 size);
-bool place_plant(Map *map, u32 x, u32 y, PlantType type, u8 variant, u8 stage);
-bool place_unit(Map *map, u32 x, u32 y, UnitType type, u8 owner, bool mirror_owner);
-bool place_animal(Map *map, u32 x, u32 y, AnimalType type, u8 count);
+bool map_place_building(Map *map, int x, int y, BuildingType type, BuildingOrientation orientation, int owner, bool mirror_owner);
+bool map_place_pitch_ditch(Map *map, int x, int y, int owner, bool mirror_owner);
+bool map_place_wall(Map *map, int x_start, int y_start, int x_end, int y_end, WallType type, int owner, bool mirror_owner);
+bool map_place_rock(Map *map, int x, int y, int size);
+bool map_place_plant(Map *map, int x, int y, PlantType type, int variant, int stage);
+bool map_place_unit(Map *map, int x, int y, UnitType type, int owner, bool mirror_owner);
+bool map_place_animal_group(Map *map, int x, int y, AnimalGroupType type, int count);

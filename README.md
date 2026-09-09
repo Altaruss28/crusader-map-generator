@@ -12,9 +12,7 @@ Procedural map generator for Stronghold Crusader
 Windows 7 or newer, or Wine
 
 Stronghold Crusader
-- v1.41 and v1.41-E in latin-alphabet localizations are supported
-- Older HD versions and/or non-latin-alphabet localizations are not supported, but are likely to be compatible anyway
-- Non-HD versions are not supported and are very unlikely to be compatible
+- Only v1.41 and v1.41-E in latin-alphabet localizations are supported, other versions and localizations may not be compatible
 
 ### Setup
 
@@ -22,18 +20,18 @@ Stronghold Crusader
 
    Make sure to choose the correct build for your system
 
-   Extract the files into a folder anywhere on your PC
+   Extract the files anywhere on your PC
 
 2. **Configure the generator**
 
    Edit the `config.txt` file in the program directory
 
    A default config is provided
-   
-   The config is validated before each run with very lenient rules, it is still possible to set impossible or nonsensical values
-   
-   You may reorder variables freely, however every variable must exist and have a valid value
-   
+
+   You may reorder variables and change their values freely, however every variable must exist and have a valid value
+
+   The config is validated before each run with very lenient rules, it is still possible to set nonsensical values
+
    Documentation of variables is not provided, experiment with values to see how they affect the output
 
 3. **Run the game**
@@ -43,9 +41,9 @@ Stronghold Crusader
 4. **Run the generator**
 
    Administrator permissions are required
-   
+
    Do not interact with the game while the generator is running, doing so may corrupt the output or crash the game
-   
+
    If your antivirus quarantines the program, create an exception, restore or reinstall the executable if necessary
 
 ## Licensing and Attribution

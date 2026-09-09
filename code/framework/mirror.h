@@ -1,28 +1,27 @@
 #pragma once
-#include "utils.h"
-#include "map.h"
-#include "config.h"
 
-typedef struct MirrorPoints {
+#include "common.h"
+
+typedef struct {
 	Coords points[8];
-	u8 count;
+	int count;
 } MirrorPoints;
 
-typedef void (*GetMirrorPointsFnPtr)(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size);
-extern GetMirrorPointsFnPtr get_mirror_points;
+typedef MirrorPoints (*MirrorPointsInitFnPtr)(int x, int y, int object_size);
+extern MirrorPointsInitFnPtr mirror_points_init;
 
-void get_mirror_points_none(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size);
-void get_mirror_points_x(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size);
-void get_mirror_points_y(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size);
-void get_mirror_points_quad(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size);
-void get_mirror_points_d_x(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size);
-void get_mirror_points_d_y(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size);
-void get_mirror_points_d_quad(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size);
-void get_mirror_points_octa(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size);
-void get_mirror_points_2_point(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size);
-void get_mirror_points_4_point(MirrorPoints *current_mirror_points, u32 x, u32 y, u32 object_size);
+MirrorPoints mirror_points_init_none(int x, int y, int);
+MirrorPoints mirror_points_init_x(int x, int y, int object_size);
+MirrorPoints mirror_points_init_y(int x, int y, int object_size);
+MirrorPoints mirror_points_init_quad(int x, int y, int object_size);
+MirrorPoints mirror_points_init_d_x(int x, int y, int object_size);
+MirrorPoints mirror_points_init_d_y(int x, int y, int);
+MirrorPoints mirror_points_init_d_quad(int x, int y, int object_size);
+MirrorPoints mirror_points_init_octa(int x, int y, int object_size);
+MirrorPoints mirror_points_init_2_point(int x, int y, int object_size);
+MirrorPoints mirror_points_init_4_point(int x, int y, int object_size);
 
-void init_mirror(Config *config);
+void mirror_init(const char *mirror_mode);
 
-bool has_mirror_overlap_rectangle(u32 x_origin, u32 y_origin, u32 rectangle_width, u32 rectangle_length);
-bool has_mirror_overlap_array(CoordsArray *claimed_tiles);
+bool mirror_check_overlap_rectangle(int x_origin, int y_origin, int rectangle_width, int rectangle_length);
+bool mirror_check_overlap_array(const CoordsArray *claimed_tiles);
